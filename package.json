@@ -9,6 +9,7 @@
   },
   "scripts": {
     "demo:localnet": "SUI_NETWORK=localnet tsx demos/localnet-pq/run.ts",
+    "demo:pq-only": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-only-account.ts",
     "setup": "bash scripts/setup.sh",
     "bootstrap": "bash scripts/setup.sh",
     "setup:sui": "bash scripts/install-sui.sh",
