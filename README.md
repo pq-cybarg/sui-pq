@@ -1,5 +1,7 @@
 # Sui Ecosystem Development Workspace
 
+[![CI](https://github.com/pq-cybarg/sui-pq/actions/workflows/ci.yml/badge.svg)](https://github.com/pq-cybarg/sui-pq/actions/workflows/ci.yml)
+
 A comprehensive monorepo for building across the Sui blockchain ecosystem. Covers Move smart contracts, the TypeScript SDK, wallets (Slush, Suiet, Phantom), Walrus decentralized storage, Seal decentralized secrets, Lumiwave, DeepBook, zkLogin, sponsored transactions, oracles, bridges, and more.
 
 ## What's inside
