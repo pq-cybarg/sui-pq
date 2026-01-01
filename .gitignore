@@ -49,3 +49,7 @@ coverage/
 .cache/
 .tmp/
 tmp/
+
+# Rust
+crates/**/target/
+Cargo.lock
