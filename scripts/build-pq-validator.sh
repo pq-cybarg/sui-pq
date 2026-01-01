@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build a locally-forked sui-node binary that natively verifies SLH-DSA-LITE
-# transaction signatures, then start a one-validator localnet using it.
+# Build a locally-forked sui-node binary that natively verifies FIPS-205
+# SLH-DSA-SHA2-128s transaction signatures, then start a one-validator localnet
+# using it.
 #
 # Output: $PQ_SUI_HOME/bin/sui-node (the patched binary), and a running localnet.
 #
@@ -62,22 +63,22 @@ if (( LAUNCH_ONLY == 0 )); then
 
   if (( SKIP_PATCHES == 0 )); then
     cd "$PQ_SUI_HOME/sui"
-    if git log --oneline | head -5 | grep -q "SLH-DSA-LITE"; then
-      ok "patches already applied"
+    PATCH="$PATCHES/sui-1.72.2-native-slh-dsa.patch"
+    # The patch's signature is the new authenticator module; if it's present,
+    # the patch is already applied (it's a plain diff, not a commit).
+    if [ -f crates/sui-types/src/slh_dsa_authenticator.rs ]; then
+      ok "patch already applied"
     else
-      log "applying PQ patches"
-      for p in "$PATCHES"/0*.patch; do
-        warn "applying $(basename "$p")"
-        if ! git apply --3way --whitespace=fix "$p"; then
-          warn "patch $(basename "$p") did not apply cleanly."
-          warn "the patches are **illustrative** — they were authored against $SUI_REV."
-          warn "Sui evolves quickly; if hunks fail you'll need to:"
-          warn "  1) read the patch (it documents WHAT to add in plain English)"
-          warn "  2) hand-apply the changes against current Sui internals"
-          warn "  3) re-run with --launch-only after the hand-edits build"
-          die "stopping so you can resolve rejects"
-        fi
-      done
+      log "applying PQ patch $(basename "$PATCH")"
+      if ! git apply --3way --whitespace=fix "$PATCH"; then
+        warn "patch $(basename "$PATCH") did not apply cleanly."
+        warn "it is **illustrative** — it was authored against $SUI_REV."
+        warn "Sui evolves quickly; if hunks fail you'll need to:"
+        warn "  1) read the patch (it's a single readable diff)"
+        warn "  2) hand-apply the changes against current Sui internals"
+        warn "  3) re-run with --launch-only after the hand-edits build"
+        die "stopping so you can resolve rejects"
+      fi
     fi
   else
     warn "--skip-patches set; building vanilla Sui (no PQ scheme)"

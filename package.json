@@ -31,24 +31,24 @@
     "verify:fixture:gen": "pnpm exec tsx packages/pqc/scripts/gen-diff-fixture.ts 1000 > test-vectors/fips205-diff.jsonl",
     "verify:tsref": "pnpm exec tsx packages/pqc/scripts/lean-diff-tsref.ts 30",
     "faucet": "bash scripts/faucet.sh",
-
     "web:start": "bash scripts/server.sh web start",
     "web:stop": "bash scripts/server.sh web stop",
     "web:restart": "bash scripts/server.sh web restart",
     "web:status": "bash scripts/server.sh web status",
     "web:open": "bash scripts/server.sh web open",
     "web:logs": "bash scripts/server.sh web tail",
-
     "tutorial:start": "bash scripts/server.sh tutorial start",
     "tutorial:stop": "bash scripts/server.sh tutorial stop",
     "tutorial:restart": "bash scripts/server.sh tutorial restart",
     "tutorial:status": "bash scripts/server.sh tutorial status",
     "tutorial:open": "bash scripts/server.sh tutorial open",
     "tutorial:logs": "bash scripts/server.sh tutorial tail",
-
     "servers:start": "bash scripts/server.sh all start",
     "servers:stop": "bash scripts/server.sh all stop",
-    "servers:status": "bash scripts/server.sh all status"
+    "servers:status": "bash scripts/server.sh all status",
+    "demo:pq-native": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-only-native.ts",
+    "demo:pq-exhaustive": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-exhaustive.ts",
+    "demo:pq-mnemonic": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-mnemonic.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

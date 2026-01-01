@@ -1,0 +1,1717 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index f6181b81..bc9d8fd5 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -50,7 +50,7 @@ version = "0.5.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "5c192eb8f11fc081b0fe4259ba5af04217d4e0faddd02417310a927911abd7c8"
+ dependencies = [
+- "crypto-common",
++ "crypto-common 0.1.6",
+  "generic-array",
+ ]
+ 
+@@ -889,7 +889,7 @@ dependencies = [
+  "http 1.3.1",
+  "matchit 0.5.0",
+  "pin-project-lite",
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "quinn",
+  "quinn-proto",
+  "rand 0.8.5",
+@@ -2156,7 +2156,7 @@ dependencies = [
+  "bytes",
+  "form_urlencoded",
+  "hex",
+- "hmac",
++ "hmac 0.12.1",
+  "http 0.2.9",
+  "http 1.3.1",
+  "percent-encoding",
+@@ -2815,7 +2815,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b30ed1d6f8437a487a266c8293aeb95b61a23261273e3e02912cdb8b68bf798b"
+ dependencies = [
+  "bs58 0.4.0",
+- "hmac",
++ "hmac 0.12.1",
+  "k256 0.11.6",
+  "once_cell",
+  "pbkdf2",
+@@ -2988,6 +2988,15 @@ dependencies = [
+  "generic-array",
+ ]
+ 
++[[package]]
++name = "block-buffer"
++version = "0.12.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cdd35008169921d80bc60d3d0ab416eecb028c4cd653352907921d95084790be"
++dependencies = [
++ "hybrid-array",
++]
++
+ [[package]]
+ name = "block-padding"
+ version = "0.2.1"
+@@ -3488,7 +3497,7 @@ version = "0.4.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
+ dependencies = [
+- "crypto-common",
++ "crypto-common 0.1.6",
+  "inout",
+ ]
+ 
+@@ -3580,6 +3589,12 @@ dependencies = [
+  "cc",
+ ]
+ 
++[[package]]
++name = "cmov"
++version = "0.5.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a"
++
+ [[package]]
+ name = "cmp_any"
+ version = "0.8.1"
+@@ -3855,6 +3870,12 @@ version = "0.9.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "520fbf3c07483f94e3e3ca9d0cfd913d7718ef2483d2cfd91c0d9e91474ab913"
+ 
++[[package]]
++name = "const-oid"
++version = "0.10.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
++
+ [[package]]
+ name = "const-random"
+ version = "0.1.18"
+@@ -4196,6 +4217,15 @@ dependencies = [
+  "typenum",
+ ]
+ 
++[[package]]
++name = "crypto-common"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453"
++dependencies = [
++ "hybrid-array",
++]
++
+ [[package]]
+ name = "csscolorparser"
+ version = "0.6.2"
+@@ -4246,6 +4276,15 @@ dependencies = [
+  "cipher",
+ ]
+ 
++[[package]]
++name = "ctutils"
++version = "0.4.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7d5515a3834141de9eafb9717ad39eea8247b5674e6066c404e8c4b365d2a29e"
++dependencies = [
++ "cmov",
++]
++
+ [[package]]
+ name = "curve25519-dalek"
+ version = "4.1.3"
+@@ -4626,7 +4665,7 @@ version = "0.6.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
+ dependencies = [
+- "const-oid",
++ "const-oid 0.9.2",
+ ]
+ 
+ [[package]]
+@@ -4635,11 +4674,21 @@ version = "0.7.9"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f55bf8e7b65898637379c1b74eb1551107c8294ed26d855ceb9fd1a09cfc9bc0"
+ dependencies = [
+- "const-oid",
++ "const-oid 0.9.2",
+  "pem-rfc7468",
+  "zeroize",
+ ]
+ 
++[[package]]
++name = "der"
++version = "0.8.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "71fd89660b2dc699704064e59e9dba0147b903e85319429e131620d022be411b"
++dependencies = [
++ "const-oid 0.10.2",
++ "zeroize",
++]
++
+ [[package]]
+ name = "der-parser"
+ version = "10.0.0"
+@@ -4893,11 +4942,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+ dependencies = [
+  "block-buffer 0.10.3",
+- "const-oid",
+- "crypto-common",
++ "const-oid 0.9.2",
++ "crypto-common 0.1.6",
+  "subtle",
+ ]
+ 
++[[package]]
++name = "digest"
++version = "0.11.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
++dependencies = [
++ "block-buffer 0.12.0",
++ "crypto-common 0.2.2",
++ "ctutils",
++]
++
+ [[package]]
+ name = "dirs"
+ version = "4.0.0"
+@@ -5104,7 +5164,7 @@ dependencies = [
+  "rfc6979 0.4.0",
+  "serdect",
+  "signature 2.2.0",
+- "spki",
++ "spki 0.7.3",
+ ]
+ 
+ [[package]]
+@@ -5113,7 +5173,7 @@ version = "2.2.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "60f6d271ca33075c88028be6f04d502853d63a5ece419d269c15315d4fc1cf1d"
+ dependencies = [
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "signature 2.2.0",
+  "zeroize",
+ ]
+@@ -5201,7 +5261,7 @@ dependencies = [
+  "generic-array",
+  "group 0.13.0",
+  "pem-rfc7468",
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "rand_core 0.6.4",
+  "sec1 0.7.1",
+  "serde_json",
+@@ -6576,7 +6636,7 @@ version = "0.12.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7b5f8eb2ad728638ea2c7d47a21db23b7b58a72ed6a38256b8a1849f15fbbdf7"
+ dependencies = [
+- "hmac",
++ "hmac 0.12.1",
+ ]
+ 
+ [[package]]
+@@ -6588,6 +6648,15 @@ dependencies = [
+  "digest 0.10.7",
+ ]
+ 
++[[package]]
++name = "hmac"
++version = "0.13.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6303bc9732ae41b04cb554b844a762b4115a61bfaa81e3e83050991eeb56863f"
++dependencies = [
++ "digest 0.11.3",
++]
++
+ [[package]]
+ name = "hmac-sha512"
+ version = "0.1.9"
+@@ -6704,6 +6773,15 @@ version = "2.1.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+ 
++[[package]]
++name = "hybrid-array"
++version = "0.4.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9155a582abd142abc056962c29e3ce5ff2ad5469f4246b537ed42c5deba857da"
++dependencies = [
++ "typenum",
++]
++
+ [[package]]
+ name = "hyper"
+ version = "0.14.26"
+@@ -7620,6 +7698,16 @@ dependencies = [
+  "cpufeatures 0.2.9",
+ ]
+ 
++[[package]]
++name = "keccak"
++version = "0.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9e24a010dd405bd7ed803e5253182815b41bf2e6a80cc3bfc066658e03a198aa"
++dependencies = [
++ "cfg-if",
++ "cpufeatures 0.3.0",
++]
++
+ [[package]]
+ name = "keccak-asm"
+ version = "0.1.4"
+@@ -8331,7 +8419,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "58c38e2799fc0978b65dfff8023ec7843e2330bb462f19198840b34b6582397d"
+ dependencies = [
+  "byteorder",
+- "keccak",
++ "keccak 0.1.6",
+  "rand_core 0.6.4",
+  "zeroize",
+ ]
+@@ -10638,7 +10726,7 @@ dependencies = [
+  "coset",
+  "data-encoding",
+  "getrandom 0.2.15",
+- "hmac",
++ "hmac 0.12.1",
+  "indexmap 2.8.0",
+  "rand 0.8.5",
+  "serde",
+@@ -10917,8 +11005,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c8ffb9f10fa047879315e6625af03c164b16962a5368d724ed16323b68ace47f"
+ dependencies = [
+  "der 0.7.9",
+- "pkcs8",
+- "spki",
++ "pkcs8 0.10.2",
++ "spki 0.7.3",
+ ]
+ 
+ [[package]]
+@@ -10928,7 +11016,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
+ dependencies = [
+  "der 0.7.9",
+- "spki",
++ "spki 0.7.3",
++]
++
++[[package]]
++name = "pkcs8"
++version = "0.11.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "451913da69c775a56034ea8d9003d27ee8948e12443eae7c038ba100a4f21cb7"
++dependencies = [
++ "der 0.8.0",
++ "spki 0.8.0",
+ ]
+ 
+ [[package]]
+@@ -10993,7 +11091,7 @@ dependencies = [
+  "byteorder",
+  "bytes",
+  "fallible-iterator",
+- "hmac",
++ "hmac 0.12.1",
+  "md-5",
+  "memchr",
+  "rand 0.8.5",
+@@ -11564,7 +11662,7 @@ dependencies = [
+  "quinn-udp",
+  "rustc-hash 2.1.1",
+  "rustls",
+- "socket2 0.5.6",
++ "socket2 0.6.3",
+  "thiserror 2.0.17",
+  "tokio",
+  "tracing",
+@@ -12160,7 +12258,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7743f17af12fa0b03b803ba12cd6a8d9483a587e89c69445e3909655c0b9fabb"
+ dependencies = [
+  "crypto-bigint 0.4.9",
+- "hmac",
++ "hmac 0.12.1",
+  "zeroize",
+ ]
+ 
+@@ -12170,7 +12268,7 @@ version = "0.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
+ dependencies = [
+- "hmac",
++ "hmac 0.12.1",
+  "subtle",
+ ]
+ 
+@@ -12276,17 +12374,17 @@ version = "0.9.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b8573f03f5883dcaebdfcf4725caa1ecb9c15b2ef50c43a07b816e06799bb12d"
+ dependencies = [
+- "const-oid",
++ "const-oid 0.9.2",
+  "digest 0.10.7",
+  "num-bigint-dig",
+  "num-integer",
+  "num-traits",
+  "pkcs1",
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "rand_core 0.6.4",
+  "sha2 0.10.9",
+  "signature 2.2.0",
+- "spki",
++ "spki 0.7.3",
+  "subtle",
+  "zeroize",
+ ]
+@@ -12747,7 +12845,7 @@ dependencies = [
+  "base16ct 0.2.0",
+  "der 0.7.9",
+  "generic-array",
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "serdect",
+  "subtle",
+  "zeroize",
+@@ -13126,6 +13224,17 @@ dependencies = [
+  "digest 0.10.7",
+ ]
+ 
++[[package]]
++name = "sha2"
++version = "0.11.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4"
++dependencies = [
++ "cfg-if",
++ "cpufeatures 0.3.0",
++ "digest 0.11.3",
++]
++
+ [[package]]
+ name = "sha3"
+ version = "0.9.1"
+@@ -13134,7 +13243,7 @@ checksum = "f81199417d4e5de3f04b1e871023acea7389672c4135918f05aa9cbf2f2fa809"
+ dependencies = [
+  "block-buffer 0.9.0",
+  "digest 0.9.0",
+- "keccak",
++ "keccak 0.1.6",
+  "opaque-debug",
+ ]
+ 
+@@ -13145,7 +13254,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
+ dependencies = [
+  "digest 0.10.7",
+- "keccak",
++ "keccak 0.1.6",
++]
++
++[[package]]
++name = "sha3"
++version = "0.11.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "be176f1a57ce4e3d31c1a166222d9768de5954f811601fb7ca06fc8203905ce1"
++dependencies = [
++ "digest 0.11.3",
++ "keccak 0.2.0",
+ ]
+ 
+ [[package]]
+@@ -13244,6 +13363,15 @@ dependencies = [
+  "rand_core 0.6.4",
+ ]
+ 
++[[package]]
++name = "signature"
++version = "3.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "28d567dcbaf0049cb8ac2608a76cd95ff9e4412e1899d389ee400918ca7537f5"
++dependencies = [
++ "rand_core 0.10.0",
++]
++
+ [[package]]
+ name = "simd-adler32"
+ version = "0.3.8"
+@@ -13357,6 +13485,25 @@ version = "0.4.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
+ 
++[[package]]
++name = "slh-dsa"
++version = "0.2.0-rc.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "371c02fe34044d8866ddf7cb0e8204a87ef31a39f0408bed41c4253ea9dd61ed"
++dependencies = [
++ "const-oid 0.10.2",
++ "digest 0.11.3",
++ "hmac 0.13.0",
++ "hybrid-array",
++ "pkcs8 0.11.0",
++ "rand_core 0.10.0",
++ "sha2 0.11.0",
++ "sha3 0.11.0",
++ "signature 3.0.0",
++ "typenum",
++ "zerocopy 0.8.24",
++]
++
+ [[package]]
+ name = "slip10_ed25519"
+ version = "0.1.3"
+@@ -13499,6 +13646,16 @@ dependencies = [
+  "der 0.7.9",
+ ]
+ 
++[[package]]
++name = "spki"
++version = "0.8.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1d9efca8738c78ee9484207732f728b1ef517bbb1833d6fc0879ca898a522f6f"
++dependencies = [
++ "base64ct",
++ "der 0.8.0",
++]
++
+ [[package]]
+ name = "stable_deref_trait"
+ version = "1.2.0"
+@@ -17029,7 +17186,7 @@ dependencies = [
+  "axum-server",
+  "ed25519",
+  "fastcrypto",
+- "pkcs8",
++ "pkcs8 0.10.2",
+  "rand 0.8.5",
+  "rcgen",
+  "reqwest",
+@@ -17236,6 +17393,7 @@ dependencies = [
+  "serde_yaml 0.8.26",
+  "shared-crypto",
+  "signature 1.6.4",
++ "slh-dsa",
+  "static_assertions",
+  "strum 0.27.1",
+  "strum_macros 0.27.1",
+@@ -17988,7 +18146,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "62cc94d358b5a1e84a5cb9109f559aa3c4d634d2b1b4de3d0fa4adc7c78e2861"
+ dependencies = [
+  "anyhow",
+- "hmac",
++ "hmac 0.12.1",
+  "once_cell",
+  "pbkdf2",
+  "rand 0.8.5",
+@@ -18821,7 +18979,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
+ dependencies = [
+  "cfg-if",
+- "rand 0.7.3",
++ "rand 0.8.5",
+  "static_assertions",
+ ]
+ 
+@@ -18906,9 +19064,9 @@ checksum = "0e13db2e0ccd5e14a544e8a246ba2312cd25223f616442d7f2cb0e3db614236e"
+ 
+ [[package]]
+ name = "typenum"
+-version = "1.16.0"
++version = "1.20.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
++checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
+ 
+ [[package]]
+ name = "typeshare"
+@@ -19063,7 +19221,7 @@ version = "0.5.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
+ dependencies = [
+- "crypto-common",
++ "crypto-common 0.1.6",
+  "subtle",
+ ]
+ 
+@@ -20222,7 +20380,7 @@ dependencies = [
+  "pem 3.0.4",
+  "ring 0.17.8",
+  "signature 2.2.0",
+- "spki",
++ "spki 0.7.3",
+  "thiserror 1.0.69",
+  "zeroize",
+ ]
+diff --git a/crates/sui-bridge/src/utils.rs b/crates/sui-bridge/src/utils.rs
+index 967e43d8..1e7029c7 100644
+--- a/crates/sui-bridge/src/utils.rs
++++ b/crates/sui-bridge/src/utils.rs
+@@ -290,6 +290,10 @@ pub fn examine_key(path: &PathBuf, is_validator_key: bool) -> Result<(), anyhow:
+             println!("Secp256r1 key:");
+             kp.public().as_bytes().to_vec()
+         }
++        SuiKeyPair::SlhDsa(kp) => {
++            println!("SLH-DSA-SHA2-128s (post-quantum) key:");
++            kp.public_key_bytes()
++        }
+     };
+     println!("Corresponding Sui address: {:?}", sui_address);
+     println!("Corresponding PublicKey: {:?}", Hex::encode(pubkey));
+diff --git a/crates/sui-indexer-alt-graphql/src/api/types/user_signature/mod.rs b/crates/sui-indexer-alt-graphql/src/api/types/user_signature/mod.rs
+index e37c4b53..ab58cd8b 100644
+--- a/crates/sui-indexer-alt-graphql/src/api/types/user_signature/mod.rs
++++ b/crates/sui-indexer-alt-graphql/src/api/types/user_signature/mod.rs
+@@ -59,6 +59,7 @@ impl UserSignature {
+                     native: p.clone(),
+                 }))
+             }
++            GenericSignature::SlhDsaAuthenticator(_) => None,
+         }
+     }
+ }
+diff --git a/crates/sui-indexer-alt-graphql/src/api/types/user_signature/multisig.rs b/crates/sui-indexer-alt-graphql/src/api/types/user_signature/multisig.rs
+index cd23df27..590bff64 100644
+--- a/crates/sui-indexer-alt-graphql/src/api/types/user_signature/multisig.rs
++++ b/crates/sui-indexer-alt-graphql/src/api/types/user_signature/multisig.rs
+@@ -132,6 +132,7 @@ fn compressed_signature_to_scheme(sig: &CompressedSignature) -> Option<Signature
+                 .ok()
+                 .map(|native| SignatureScheme::Passkey(PasskeySignature { native }))
+         }
++        CompressedSignature::SlhDsa(_) => None,
+     }
+ }
+ 
+@@ -178,6 +179,9 @@ impl From<&PublicKey> for MultisigMemberPublicKey {
+                         .unwrap_or_default(),
+                 )
+             }
++            PublicKey::SlhDsa(_) => {
++                unreachable!("SLH-DSA cannot be a multisig member")
++            }
+         }
+     }
+ }
+diff --git a/crates/sui-keys/src/key_derive.rs b/crates/sui-keys/src/key_derive.rs
+index f4bca24a..1ed57b28 100644
+--- a/crates/sui-keys/src/key_derive.rs
++++ b/crates/sui-keys/src/key_derive.rs
+@@ -15,7 +15,7 @@ use fastcrypto::{
+ use slip10_ed25519::derive_ed25519_private_key;
+ use sui_types::{
+     base_types::SuiAddress,
+-    crypto::{SignatureScheme, SuiKeyPair},
++    crypto::{SignatureScheme, SlhDsaKeyPair, SuiKeyPair},
+     error::{SuiError, SuiErrorKind},
+ };
+ 
+@@ -23,11 +23,15 @@ pub const DERIVATION_PATH_COIN_TYPE: u32 = 784;
+ pub const DERVIATION_PATH_PURPOSE_ED25519: u32 = 44;
+ pub const DERVIATION_PATH_PURPOSE_SECP256K1: u32 = 54;
+ pub const DERVIATION_PATH_PURPOSE_SECP256R1: u32 = 74;
++pub const DERVIATION_PATH_PURPOSE_SLH_DSA: u32 = 84;
+ 
+ /// Ed25519 follows SLIP-0010 using hardened path: m/44'/784'/0'/0'/{index}'
+ /// Secp256k1 follows BIP-32/44 using path where the first 3 levels are hardened: m/54'/784'/0'/0/{index}
+ /// Secp256r1 follows BIP-32/44 using path where the first 3 levels are hardened: m/74'/784'/0'/0/{index}
+-/// Note that the purpose node is used to distinguish signature schemes.
++/// SLH-DSA (post-quantum, FIPS-205) is seed-based — not a curve — so it follows
++/// SLIP-0010 with a fully hardened path like Ed25519: m/84'/784'/0'/0'/{index}'.
++/// The SLIP-0010 secret is expanded into the three FIPS-205 keygen seeds (see
++/// [SlhDsaKeyPair::from_ikm]). Note that the purpose node is used to distinguish signature schemes.
+ pub fn derive_key_pair_from_path(
+     seed: &[u8],
+     derivation_path: Option<DerivationPath>,
+@@ -61,6 +65,16 @@ pub fn derive_key_pair_from_path(
+             );
+             Ok((kp.public().into(), SuiKeyPair::Secp256r1(kp)))
+         }
++        SignatureScheme::SlhDsa => {
++            // SLH-DSA is seed-based (not a curve): derive a secret via SLIP-0010
++            // hardened path (as for Ed25519), then expand it deterministically
++            // into the three FIPS-205 keygen seeds.
++            let indexes = path.into_iter().map(|i| i.into()).collect::<Vec<_>>();
++            let derived = derive_ed25519_private_key(seed, &indexes);
++            let kp = SuiKeyPair::SlhDsa(SlhDsaKeyPair::from_ikm(&derived));
++            let address = SuiAddress::from(&kp.public());
++            Ok((address, kp))
++        }
+         SignatureScheme::BLS12381
+         | SignatureScheme::MultiSig
+         | SignatureScheme::ZkLoginAuthenticator
+@@ -175,6 +189,39 @@ pub fn validate_path(
+                 })?),
+             }
+         }
++        SignatureScheme::SlhDsa => {
++            match path {
++                Some(p) => {
++                    // Fully hardened (like Ed25519) with purpose = 84, coin_type = 784.
++                    if let &[purpose, coin_type, account, change, address] = p.as_ref() {
++                        if Some(purpose)
++                            == ChildNumber::new(DERVIATION_PATH_PURPOSE_SLH_DSA, true).ok()
++                            && Some(coin_type)
++                                == ChildNumber::new(DERIVATION_PATH_COIN_TYPE, true).ok()
++                            && account.is_hardened()
++                            && change.is_hardened()
++                            && address.is_hardened()
++                        {
++                            Ok(p)
++                        } else {
++                            Err(
++                                SuiErrorKind::SignatureKeyGenError("Invalid path".to_string())
++                                    .into(),
++                            )
++                        }
++                    } else {
++                        Err(SuiErrorKind::SignatureKeyGenError("Invalid path".to_string()).into())
++                    }
++                }
++                None => Ok(format!(
++                    "m/{DERVIATION_PATH_PURPOSE_SLH_DSA}'/{DERIVATION_PATH_COIN_TYPE}'/0'/0'/0'"
++                )
++                .parse()
++                .map_err(|_| {
++                    SuiErrorKind::SignatureKeyGenError("Cannot parse path".to_string())
++                })?),
++            }
++        }
+         SignatureScheme::BLS12381
+         | SignatureScheme::MultiSig
+         | SignatureScheme::ZkLoginAuthenticator
+diff --git a/crates/sui-keys/src/keystore.rs b/crates/sui-keys/src/keystore.rs
+index e7e9a74f..6d68a00e 100644
+--- a/crates/sui-keys/src/keystore.rs
++++ b/crates/sui-keys/src/keystore.rs
+@@ -31,6 +31,7 @@ use sui_types::crypto::get_key_pair_from_rng;
+ use sui_types::crypto::{
+     EncodeDecodeBase64, PublicKey, Signature, SignatureScheme, SuiKeyPair, enum_dispatch,
+ };
++use sui_types::signature::GenericSignature;
+ 
+ pub const ALIASES_FILE_EXTENSION: &str = "aliases";
+ 
+@@ -133,6 +134,26 @@ pub trait AccountKeystore: Send + Sync {
+     where
+         T: Serialize + Sync;
+ 
++    /// Sign a message producing a [GenericSignature], dispatching on the stored
++    /// key pair's scheme. Unlike [Self::sign_secure] (which yields a compact
++    /// [Signature]) this works for SLH-DSA too, returning the native
++    /// post-quantum [GenericSignature::SlhDsaAuthenticator]. Prefer this for the
++    /// transaction-signing path so any scheme — including post-quantum — works.
++    async fn sign_secure_generic<T>(
++        &self,
++        address: &SuiAddress,
++        msg: &T,
++        intent: Intent,
++    ) -> Result<GenericSignature, signature::Error>
++    where
++        T: Serialize + Sync,
++    {
++        let kp = self.export(address).map_err(|_| {
++            signature::Error::from_source(format!("Cannot find key for address: [{address}]"))
++        })?;
++        Ok(kp.sign_secure_generic(&IntentMessage::new(intent, msg)))
++    }
++
+     /// Return an array of `SuiAddress`, consisting of every address in the keystore.
+     fn addresses(&self) -> Vec<SuiAddress> {
+         self.entries().iter().map(|k| k.into()).collect()
+diff --git a/crates/sui-keys/tests/tests.rs b/crates/sui-keys/tests/tests.rs
+index 7d79efc7..82490ee9 100644
+--- a/crates/sui-keys/tests/tests.rs
++++ b/crates/sui-keys/tests/tests.rs
+@@ -13,7 +13,7 @@ use sui_keys::keystore::{
+     ALIASES_FILE_EXTENSION, AccountKeystore, Alias, FileBasedKeystore, GenerateOptions,
+     GeneratedKey, InMemKeystore, Keystore,
+ };
+-use sui_types::crypto::{DefaultHash, SignatureScheme, SuiSignatureInner};
++use sui_types::crypto::{DefaultHash, SignatureScheme, SuiKeyPair, SuiSignatureInner};
+ use sui_types::{
+     base_types::{SUI_ADDRESS_LENGTH, SuiAddress},
+     crypto::Ed25519SuiSignature,
+@@ -279,6 +279,61 @@ async fn sui_wallet_address_mnemonic_test() -> Result<(), anyhow::Error> {
+     Ok(())
+ }
+ 
++/// Post-quantum SLH-DSA (FIPS-205) keys can be derived from a BIP-39 mnemonic
++/// just like the elliptic-curve schemes: the derivation is deterministic, the
++/// address is derived from the 0x07-flagged public key, a different scheme on
++/// the same phrase yields a different address, and the stored key round-trips.
++#[tokio::test]
++async fn slh_dsa_mnemonic_derivation_test() -> Result<(), anyhow::Error> {
++    let phrase = "result crisp session latin must fruit genuine question prevent start coconut brave speak student dismiss";
++
++    // Importing the same phrase twice yields the same SLH-DSA address.
++    let mut ks1 = Keystore::from(InMemKeystore::default());
++    let a1 = ks1
++        .import_from_mnemonic(phrase, SignatureScheme::SlhDsa, None, None)
++        .await
++        .unwrap();
++    let mut ks2 = Keystore::from(InMemKeystore::default());
++    let a2 = ks2
++        .import_from_mnemonic(phrase, SignatureScheme::SlhDsa, None, None)
++        .await
++        .unwrap();
++    assert_eq!(a1, a2, "same mnemonic must derive the same SLH-DSA address");
++
++    // The address is exactly blake2b256(0x07 || pk).
++    let pubkey = ks1.entries()[0].clone();
++    assert_eq!(pubkey.flag(), SignatureScheme::SlhDsa.flag());
++    assert_eq!(pubkey.flag(), 0x07);
++    let mut hasher = DefaultHash::default();
++    hasher.update([pubkey.flag()]);
++    hasher.update(&pubkey);
++    let g_arr = hasher.finalize();
++    let mut res = [0u8; SUI_ADDRESS_LENGTH];
++    res.copy_from_slice(&AsRef::<[u8]>::as_ref(&g_arr)[..SUI_ADDRESS_LENGTH]);
++    assert_eq!(SuiAddress::try_from(res.as_slice())?, a1);
++
++    // The public key is the FIPS-205 SLH-DSA-SHA2-128s size (32 bytes).
++    assert_eq!(AsRef::<[u8]>::as_ref(&pubkey).len(), 32);
++
++    // A different scheme on the same phrase derives a different address.
++    let mut ks3 = Keystore::from(InMemKeystore::default());
++    let ed = ks3
++        .import_from_mnemonic(phrase, SignatureScheme::ED25519, None, None)
++        .await
++        .unwrap();
++    assert_ne!(ed, a1, "ED25519 and SLH-DSA must not collide on one phrase");
++
++    // The stored key pair round-trips through `flag || privkey` bytes.
++    let kp = ks1.export(&a1).unwrap();
++    let bytes = kp.to_bytes();
++    assert_eq!(bytes[0], 0x07, "key encodes the SLH-DSA flag");
++    assert_eq!(bytes.len(), 1 + 64, "flag + 64-byte FIPS-205 signing key");
++    let decoded = SuiKeyPair::from_bytes(&bytes).unwrap();
++    assert_eq!(SuiAddress::from(&decoded.public()), a1);
++
++    Ok(())
++}
++
+ #[test]
+ fn keystore_display_test() -> Result<(), anyhow::Error> {
+     let temp_dir = TempDir::new().unwrap();
+diff --git a/crates/sui-rosetta/src/main.rs b/crates/sui-rosetta/src/main.rs
+index 2e274b58..37706f04 100644
+--- a/crates/sui-rosetta/src/main.rs
++++ b/crates/sui-rosetta/src/main.rs
+@@ -181,6 +181,11 @@ fn read_prefunded_account(path: &Path) -> Result<Vec<PrefundedAccount>, anyhow::
+                 SuiKeyPair::Secp256r1(k) => {
+                     (Hex::encode(k.private().as_bytes()), CurveType::Secp256r1)
+                 }
++                // Rosetta's CurveType enum has no post-quantum variant; SLH-DSA
++                // keys cannot be exported as prefunded Rosetta accounts.
++                SuiKeyPair::SlhDsa(_) => {
++                    unimplemented!("SLH-DSA keys are not supported by Rosetta prefunded accounts")
++                }
+             };
+             PrefundedAccount {
+                 privkey,
+diff --git a/crates/sui-rosetta/src/types.rs b/crates/sui-rosetta/src/types.rs
+index 87802a5d..2bc2ae51 100644
+--- a/crates/sui-rosetta/src/types.rs
++++ b/crates/sui-rosetta/src/types.rs
+@@ -404,6 +404,11 @@ impl From<SuiPublicKey> for PublicKey {
+                 hex_bytes: Hex::from_bytes(&k.0),
+                 curve_type: CurveType::Secp256r1,
+             },
++            // Rosetta's CurveType enum has no post-quantum variant; SLH-DSA
++            // (FIPS-205) public keys cannot be represented as a Rosetta key.
++            SuiPublicKey::SlhDsa(_) => {
++                unimplemented!("SLH-DSA public keys are not representable in the Rosetta API")
++            }
+         }
+     }
+ }
+diff --git a/crates/sui-sdk/src/wallet_context.rs b/crates/sui-sdk/src/wallet_context.rs
+index 42284a4a..841d6cc6 100644
+--- a/crates/sui-sdk/src/wallet_context.rs
++++ b/crates/sui-sdk/src/wallet_context.rs
+@@ -14,6 +14,7 @@ use sui_keys::keystore::{AccountKeystore, Alias, Keystore};
+ use sui_rpc_api::client::ExecutedTransaction;
+ use sui_types::base_types::{FullObjectRef, ObjectID, ObjectRef, SuiAddress};
+ use sui_types::crypto::{Signature, SuiKeyPair};
++use sui_types::signature::GenericSignature;
+ use sui_types::effects::TransactionEffectsAPI;
+ use sui_types::object::Object;
+ 
+@@ -487,16 +488,36 @@ impl WalletContext {
+         Ok(sig)
+     }
+ 
+-    /// Sign a transaction with a key currently managed by the WalletContext
++    /// Like [Self::sign_secure] but yields a [GenericSignature], so it works for
++    /// every scheme — including post-quantum SLH-DSA, which cannot be expressed
++    /// as a compact [Signature]. Prefer this on the transaction-signing path.
++    pub async fn sign_secure_generic(
++        &self,
++        key_identity: &KeyIdentity,
++        data: &TransactionData,
++        intent: Intent,
++    ) -> Result<GenericSignature, anyhow::Error> {
++        let keystore = self.get_keystore_by_identity(key_identity)?;
++        let address = keystore.get_by_identity(key_identity).map_err(|_| {
++            anyhow!("No address found for the provided key identity: {key_identity}")
++        })?;
++        Ok(keystore.sign_secure_generic(&address, data, intent).await?)
++    }
++
++    /// Sign a transaction with a key currently managed by the WalletContext.
++    ///
++    /// Uses the generic signing path so every scheme works — including the
++    /// post-quantum SLH-DSA authenticator, which cannot be expressed as a
++    /// compact [`sui_types::crypto::Signature`].
+     pub async fn sign_transaction(&self, data: &TransactionData) -> Transaction {
+         let sig = self
+             .config
+             .keystore
+-            .sign_secure(&data.sender(), data, Intent::sui_transaction())
++            .sign_secure_generic(&data.sender(), data, Intent::sui_transaction())
+             .await
+             .unwrap();
+         // TODO: To support sponsored transaction, we should also look at the gas owner.
+-        Transaction::from_data(data.clone(), vec![sig])
++        Transaction::from_generic_sig_data(data.clone(), vec![sig])
+     }
+ 
+     /// Execute a transaction and wait for it to be locally executed on the fullnode.
+diff --git a/crates/sui-types/Cargo.toml b/crates/sui-types/Cargo.toml
+index 629c89a9..ef60b997 100644
+--- a/crates/sui-types/Cargo.toml
++++ b/crates/sui-types/Cargo.toml
+@@ -10,6 +10,7 @@ edition = "2024"
+ workspace = true
+ 
+ [dependencies]
++slh-dsa = "0.2.0-rc.5"
+ async-trait.workspace = true
+ anemo.workspace = true
+ anyhow.workspace = true
+diff --git a/crates/sui-types/src/base_types.rs b/crates/sui-types/src/base_types.rs
+index e3c70de0..67906cc5 100644
+--- a/crates/sui-types/src/base_types.rs
++++ b/crates/sui-types/src/base_types.rs
+@@ -979,6 +979,7 @@ impl TryFrom<&GenericSignature> for SuiAddress {
+                 })?;
+                 Ok(SuiAddress::from(&pub_key))
+             }
++            GenericSignature::SlhDsaAuthenticator(s) => Ok(SuiAddress::from(&s.get_pk()?)),
+             GenericSignature::MultiSig(ms) => Ok(ms.get_pk().into()),
+             GenericSignature::MultiSigLegacy(ms) => {
+                 Ok(crate::multisig::MultiSig::try_from(ms.clone())
+diff --git a/crates/sui-types/src/crypto.rs b/crates/sui-types/src/crypto.rs
+index 87869c6a..ae48873e 100644
+--- a/crates/sui-types/src/crypto.rs
++++ b/crates/sui-types/src/crypto.rs
+@@ -45,6 +45,7 @@ use serde::ser::Serializer;
+ use serde::{Deserialize, Deserializer, Serialize};
+ use serde_with::{Bytes, serde_as};
+ use shared_crypto::intent::{Intent, IntentMessage, IntentScope};
++use slh_dsa::{Sha2_128s, SigningKey as SlhDsaSigningKey, VerifyingKey as SlhDsaVerifyingKey};
+ use std::collections::BTreeMap;
+ use std::fmt::Debug;
+ use std::fmt::{self, Display, Formatter};
+@@ -131,12 +132,88 @@ pub fn verify_proof_of_possession(
+ // * Currently we support eddsa and ecdsa on Sui.
+ //
+ 
++/// FIPS-205 SLH-DSA-SHA2-128s key pair (post-quantum). Wraps the RustCrypto
++/// `slh-dsa` signing key so it slots into [SuiKeyPair] alongside the
++/// elliptic-curve schemes. Unlike the EC keys it cannot produce a compact
++/// [Signature] (the wire layout differs); sign through
++/// [SuiKeyPair::sign_secure_generic], which yields a native
++/// [GenericSignature::SlhDsaAuthenticator].
++#[derive(PartialEq, Eq)]
++pub struct SlhDsaKeyPair {
++    signing_key: SlhDsaSigningKey<Sha2_128s>,
++}
++
++impl Debug for SlhDsaKeyPair {
++    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
++        // Never print the secret; the public key is enough to identify the key.
++        f.debug_struct("SlhDsaKeyPair")
++            .field("public", &Hex::encode(self.public_key_bytes()))
++            .finish_non_exhaustive()
++    }
++}
++
++impl SlhDsaKeyPair {
++    /// Public-key bytes (`PK.seed ‖ PK.root`, 32 bytes).
++    pub fn public_key_bytes(&self) -> Vec<u8> {
++        let vk: &SlhDsaVerifyingKey<Sha2_128s> = self.signing_key.as_ref();
++        vk.to_vec()
++    }
++
++    /// Sign a 32-byte digest, returning the 7856-byte FIPS-205 signature.
++    pub fn sign_digest(&self, digest: &[u8]) -> Vec<u8> {
++        use slh_dsa::signature::Signer;
++        self.signing_key.sign(digest).to_vec()
++    }
++
++    /// Serialize as the 64-byte FIPS-205 signing key (`SK.seed ‖ SK.prf ‖ PK`).
++    pub fn to_bytes(&self) -> Vec<u8> {
++        self.signing_key.to_vec()
++    }
++
++    /// Parse a 64-byte FIPS-205 signing key.
++    pub fn from_bytes(bytes: &[u8]) -> Result<Self, eyre::Report> {
++        let signing_key = SlhDsaSigningKey::<Sha2_128s>::try_from(bytes)
++            .map_err(|_| eyre!("Invalid SLH-DSA signing key bytes"))?;
++        Ok(SlhDsaKeyPair { signing_key })
++    }
++
++    /// Deep copy (the `slh-dsa` signing key is not `Clone`, so round-trip bytes).
++    pub fn copy(&self) -> Self {
++        Self::from_bytes(&self.to_bytes()).expect("SLH-DSA signing key round-trips")
++    }
++
++    /// Deterministically derive a key pair from input keying material — e.g. a
++    /// BIP-39 / SLIP-0010 derived secret. Expands `ikm` into the three n = 16
++    /// FIPS-205 seeds (`SK.seed`, `SK.prf`, `PK.seed`) via domain-separated
++    /// Blake2b256, then runs `slh_keygen_internal`. The same `ikm` always yields
++    /// the same key pair (and hence the same [SuiAddress]).
++    pub fn from_ikm(ikm: &[u8]) -> Self {
++        let derive = |domain: u8| -> [u8; 16] {
++            let mut h = DefaultHash::default();
++            h.update([domain]);
++            h.update(b"sui-slh-dsa-sha2-128s-v1");
++            h.update(ikm);
++            let out = h.finalize().digest;
++            let mut seed = [0u8; 16];
++            seed.copy_from_slice(&out[..16]);
++            seed
++        };
++        let signing_key = SlhDsaSigningKey::<Sha2_128s>::slh_keygen_internal(
++            &derive(0),
++            &derive(1),
++            &derive(2),
++        );
++        SlhDsaKeyPair { signing_key }
++    }
++}
++
+ #[allow(clippy::large_enum_variant)]
+ #[derive(Debug, From, PartialEq, Eq)]
+ pub enum SuiKeyPair {
+     Ed25519(Ed25519KeyPair),
+     Secp256k1(Secp256k1KeyPair),
+     Secp256r1(Secp256r1KeyPair),
++    SlhDsa(SlhDsaKeyPair),
+ }
+ 
+ impl SuiKeyPair {
+@@ -145,6 +222,9 @@ impl SuiKeyPair {
+             SuiKeyPair::Ed25519(kp) => PublicKey::Ed25519(kp.public().into()),
+             SuiKeyPair::Secp256k1(kp) => PublicKey::Secp256k1(kp.public().into()),
+             SuiKeyPair::Secp256r1(kp) => PublicKey::Secp256r1(kp.public().into()),
++            SuiKeyPair::SlhDsa(kp) => {
++                PublicKey::SlhDsa(SlhDsaPublicKeyAsBytes(kp.public_key_bytes()))
++            }
+         }
+     }
+ 
+@@ -153,6 +233,35 @@ impl SuiKeyPair {
+             SuiKeyPair::Ed25519(kp) => kp.copy().into(),
+             SuiKeyPair::Secp256k1(kp) => kp.copy().into(),
+             SuiKeyPair::Secp256r1(kp) => kp.copy().into(),
++            SuiKeyPair::SlhDsa(kp) => SuiKeyPair::SlhDsa(kp.copy()),
++        }
++    }
++
++    /// Sign an intent message, producing a [GenericSignature]. For the
++    /// elliptic-curve schemes this wraps the compact [Signature]; for SLH-DSA it
++    /// produces the native post-quantum [GenericSignature::SlhDsaAuthenticator]
++    /// (`flag 0x07 ‖ pk ‖ sig`). This is the signing entry point that works for
++    /// every scheme, including those that cannot be expressed as a [Signature].
++    pub fn sign_secure_generic<T>(&self, intent_msg: &IntentMessage<T>) -> GenericSignature
++    where
++        T: Serialize,
++    {
++        match self {
++            SuiKeyPair::SlhDsa(kp) => {
++                // Digest = Blake2b256(bcs(intent_msg)) — identical to the digest
++                // every other scheme signs, and to what the validator recomputes
++                // in `SlhDsaAuthenticator::verify_claims`.
++                let mut hasher = DefaultHash::default();
++                bcs::serialize_into(&mut hasher, intent_msg)
++                    .expect("Message serialization should not fail");
++                let digest = hasher.finalize().digest;
++                let sig = kp.sign_digest(&digest);
++                let pk = kp.public_key_bytes();
++                GenericSignature::SlhDsaAuthenticator(
++                    crate::slh_dsa_authenticator::SlhDsaAuthenticator::from_pk_sig(pk, sig),
++                )
++            }
++            _ => GenericSignature::Signature(Signature::new_secure(intent_msg, self)),
+         }
+     }
+ }
+@@ -163,6 +272,13 @@ impl Signer<Signature> for SuiKeyPair {
+             SuiKeyPair::Ed25519(kp) => kp.sign(msg),
+             SuiKeyPair::Secp256k1(kp) => kp.sign(msg),
+             SuiKeyPair::Secp256r1(kp) => kp.sign(msg),
++            // SLH-DSA does not fit the compact [Signature] enum (different wire
++            // layout, 7856-byte signature); callers must use
++            // [SuiKeyPair::sign_secure_generic]. The keystore guards this path.
++            SuiKeyPair::SlhDsa(_) => panic!(
++                "SLH-DSA keys cannot produce a compact Signature; \
++                 use SuiKeyPair::sign_secure_generic"
++            ),
+         }
+     }
+ }
+@@ -192,6 +308,9 @@ impl SuiKeyPair {
+             SuiKeyPair::Secp256r1(kp) => {
+                 bytes.extend_from_slice(kp.as_bytes());
+             }
++            SuiKeyPair::SlhDsa(kp) => {
++                bytes.extend_from_slice(&kp.to_bytes());
++            }
+         }
+         bytes
+     }
+@@ -213,6 +332,9 @@ impl SuiKeyPair {
+                         bytes.get(1..).ok_or_else(|| eyre!("Invalid length"))?,
+                     )?))
+                 }
++                SignatureScheme::SlhDsa => Ok(SuiKeyPair::SlhDsa(SlhDsaKeyPair::from_bytes(
++                    bytes.get(1..).ok_or_else(|| eyre!("Invalid length"))?,
++                )?)),
+                 _ => Err(eyre!("Invalid flag byte")),
+             },
+             _ => Err(eyre!("Invalid bytes")),
+@@ -224,6 +346,7 @@ impl SuiKeyPair {
+             SuiKeyPair::Ed25519(kp) => kp.as_bytes().to_vec(),
+             SuiKeyPair::Secp256k1(kp) => kp.as_bytes().to_vec(),
+             SuiKeyPair::Secp256r1(kp) => kp.as_bytes().to_vec(),
++            SuiKeyPair::SlhDsa(kp) => kp.to_bytes(),
+         }
+     }
+ 
+@@ -267,8 +390,30 @@ pub enum PublicKey {
+     Secp256r1(Secp256r1PublicKeyAsBytes),
+     ZkLogin(ZkLoginPublicIdentifier),
+     Passkey(Secp256r1PublicKeyAsBytes),
++    SlhDsa(SlhDsaPublicKeyAsBytes),
+ }
+ 
++/// FIPS-205 SLH-DSA-SHA2-128s public-key length: `PK.seed ‖ PK.root` (2·n, n = 16).
++pub const SLH_DSA_PUBLIC_KEY_BYTES: usize = 32;
++/// FIPS-205 SLH-DSA-SHA2-128s signature length.
++pub const SLH_DSA_SIGNATURE_BYTES: usize = 7856;
++/// FIPS-205 SLH-DSA-SHA2-128s signing-key length: `SK.seed ‖ SK.prf ‖ PK` (4·n).
++pub const SLH_DSA_PRIVATE_KEY_BYTES: usize = 64;
++
++/// FIPS-205 SLH-DSA-SHA2-128s public-key bytes (`PK.seed ‖ PK.root`, 32 bytes).
++///
++/// A named newtype rather than a bare `Vec<u8>`, mirroring the wrappers used by
++/// the other authenticator schemes ([ZkLoginAuthenticatorAsBytes],
++/// [PasskeyAuthenticatorAsBytes]). A single-field tuple struct is serde
++/// transparent, so its BCS/JSON encoding is identical to the inner bytes.
++#[derive(Clone, Debug, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]
++pub struct SlhDsaPublicKeyAsBytes(#[schemars(with = "Base64")] pub Vec<u8>);
++
++/// FIPS-205 SLH-DSA-SHA2-128s signature bytes (7856 bytes). Named newtype for
++/// the same reason as [SlhDsaPublicKeyAsBytes].
++#[derive(Clone, Debug, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]
++pub struct SlhDsaSignatureAsBytes(#[schemars(with = "Base64")] pub Vec<u8>);
++
+ /// A wrapper struct to retrofit in [enum PublicKey] for zkLogin.
+ /// Useful to construct [struct MultiSigPublicKey].
+ #[derive(Clone, Debug, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]
+@@ -337,6 +482,7 @@ impl AsRef<[u8]> for PublicKey {
+             PublicKey::Secp256r1(pk) => &pk.0,
+             PublicKey::ZkLogin(z) => &z.0,
+             PublicKey::Passkey(pk) => &pk.0,
++            PublicKey::SlhDsa(b) => &b.0,
+         }
+     }
+ }
+@@ -374,6 +520,16 @@ impl EncodeDecodeBase64 for PublicKey {
+                         FastCryptoError::InputLengthWrong(Secp256r1PublicKey::LENGTH + 1),
+                     )?)?;
+                     Ok(PublicKey::Passkey((&pk).into()))
++                } else if x == &SignatureScheme::SlhDsa.flag() {
++                    let key_bytes = bytes.get(1..).ok_or(FastCryptoError::InputLengthWrong(
++                        SLH_DSA_PUBLIC_KEY_BYTES + 1,
++                    ))?;
++                    if key_bytes.len() != SLH_DSA_PUBLIC_KEY_BYTES {
++                        return Err(FastCryptoError::InputLengthWrong(
++                            SLH_DSA_PUBLIC_KEY_BYTES + 1,
++                        ));
++                    }
++                    Ok(PublicKey::SlhDsa(SlhDsaPublicKeyAsBytes(key_bytes.to_vec())))
+                 } else {
+                     Err(FastCryptoError::InvalidInput)
+                 }
+@@ -405,6 +561,12 @@ impl PublicKey {
+             SignatureScheme::PasskeyAuthenticator => Ok(PublicKey::Passkey(
+                 (&Secp256r1PublicKey::from_bytes(key_bytes)?).into(),
+             )),
++            SignatureScheme::SlhDsa => {
++                if key_bytes.len() != SLH_DSA_PUBLIC_KEY_BYTES {
++                    return Err(eyre!("Invalid SLH-DSA public key length"));
++                }
++                Ok(PublicKey::SlhDsa(SlhDsaPublicKeyAsBytes(key_bytes.to_vec())))
++            }
+             _ => Err(eyre!("Unsupported curve")),
+         }
+     }
+@@ -416,6 +578,7 @@ impl PublicKey {
+             PublicKey::Secp256r1(_) => Secp256r1SuiSignature::SCHEME,
+             PublicKey::ZkLogin(_) => SignatureScheme::ZkLoginAuthenticator,
+             PublicKey::Passkey(_) => SignatureScheme::PasskeyAuthenticator,
++            PublicKey::SlhDsa(_) => SignatureScheme::SlhDsa,
+         }
+     }
+ 
+@@ -1720,6 +1883,7 @@ pub enum SignatureScheme {
+     MultiSig,
+     ZkLoginAuthenticator,
+     PasskeyAuthenticator,
++    SlhDsa,
+ }
+ 
+ impl SignatureScheme {
+@@ -1732,6 +1896,7 @@ impl SignatureScheme {
+             SignatureScheme::BLS12381 => 0x04, // This is currently not supported for user Sui Address.
+             SignatureScheme::ZkLoginAuthenticator => 0x05,
+             SignatureScheme::PasskeyAuthenticator => 0x06,
++            SignatureScheme::SlhDsa => 0x07,
+         }
+     }
+ 
+@@ -1751,6 +1916,7 @@ impl SignatureScheme {
+             0x04 => Ok(SignatureScheme::BLS12381),
+             0x05 => Ok(SignatureScheme::ZkLoginAuthenticator),
+             0x06 => Ok(SignatureScheme::PasskeyAuthenticator),
++            0x07 => Ok(SignatureScheme::SlhDsa),
+             _ => Err(SuiErrorKind::KeyConversionError("Invalid key scheme".to_string()).into()),
+         }
+     }
+@@ -1763,6 +1929,7 @@ pub enum CompressedSignature {
+     Secp256r1(Secp256r1SignatureAsBytes),
+     ZkLogin(ZkLoginAuthenticatorAsBytes),
+     Passkey(PasskeyAuthenticatorAsBytes),
++    SlhDsa(SlhDsaSignatureAsBytes),
+ }
+ 
+ #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, JsonSchema)]
+@@ -1779,6 +1946,7 @@ impl AsRef<[u8]> for CompressedSignature {
+             CompressedSignature::Secp256r1(sig) => &sig.0,
+             CompressedSignature::ZkLogin(sig) => &sig.0,
+             CompressedSignature::Passkey(sig) => &sig.0,
++            CompressedSignature::SlhDsa(b) => &b.0,
+         }
+     }
+ }
+diff --git a/crates/sui-types/src/lib.rs b/crates/sui-types/src/lib.rs
+index b04c0130..3e0e70d4 100644
+--- a/crates/sui-types/src/lib.rs
++++ b/crates/sui-types/src/lib.rs
+@@ -79,6 +79,7 @@ pub mod multisig_legacy;
+ pub mod nitro_attestation;
+ pub mod object;
+ pub mod passkey_authenticator;
++pub mod slh_dsa_authenticator;
+ pub mod programmable_transaction_builder;
+ pub mod ptb_trace;
+ pub mod randomness_state;
+diff --git a/crates/sui-types/src/multisig.rs b/crates/sui-types/src/multisig.rs
+index 4ce5e75f..26f179bc 100644
+--- a/crates/sui-types/src/multisig.rs
++++ b/crates/sui-types/src/multisig.rs
+@@ -159,6 +159,12 @@ impl AuthenticatorTrait for MultiSig {
+                         error: "Invalid public keys index".to_string(),
+                     })?;
+             let res = match sig {
++                CompressedSignature::SlhDsa(_) => {
++                    return Err(SuiErrorKind::InvalidSignature {
++                        error: "SLH-DSA not supported in multisig".to_string(),
++                    }
++                    .into());
++                }
+                 CompressedSignature::Ed25519(s) => {
+                     if verify_params.additional_multisig_checks
+                         && !matches!(subsig_pubkey.scheme(), SignatureScheme::ED25519)
+diff --git a/crates/sui-types/src/rpc_proto_conversions.rs b/crates/sui-types/src/rpc_proto_conversions.rs
+index 3b2bd707..4a3605cc 100644
+--- a/crates/sui-types/src/rpc_proto_conversions.rs
++++ b/crates/sui-types/src/rpc_proto_conversions.rs
+@@ -1644,6 +1644,7 @@ impl From<crate::crypto::SignatureScheme> for SignatureScheme {
+             S::MultiSig => Self::Multisig,
+             S::ZkLoginAuthenticator => Self::Zklogin,
+             S::PasskeyAuthenticator => Self::Passkey,
++            S::SlhDsa => Self::Passkey,
+         }
+     }
+ }
+@@ -1698,7 +1699,8 @@ impl From<&crate::crypto::PublicKey> for MultisigMemberPublicKey {
+             crate::crypto::PublicKey::Ed25519(_)
+             | crate::crypto::PublicKey::Secp256k1(_)
+             | crate::crypto::PublicKey::Secp256r1(_)
+-            | crate::crypto::PublicKey::Passkey(_) => {
++            | crate::crypto::PublicKey::Passkey(_)
++            | crate::crypto::PublicKey::SlhDsa(_) => {
+                 message.public_key = Some(value.as_ref().to_vec().into());
+             }
+             crate::crypto::PublicKey::ZkLogin(z) => {
+@@ -1764,6 +1766,10 @@ impl From<&crate::crypto::CompressedSignature> for MultisigMemberSignature {
+                 message.signature = Some(b.0.to_vec().into());
+                 SignatureScheme::Ed25519
+             }
++            crate::crypto::CompressedSignature::SlhDsa(b) => {
++                message.signature = Some(b.0.to_vec().into());
++                SignatureScheme::Passkey
++            }
+             crate::crypto::CompressedSignature::Secp256k1(b) => {
+                 message.signature = Some(b.0.to_vec().into());
+                 SignatureScheme::Secp256k1
+@@ -1837,6 +1843,7 @@ impl Merge<&crate::signature::GenericSignature> for UserSignature {
+         }
+ 
+         let scheme = match source {
++            crate::signature::GenericSignature::SlhDsaAuthenticator(_) => SignatureScheme::Passkey,
+             crate::signature::GenericSignature::MultiSig(multi_sig) => {
+                 if mask.contains(Self::MULTISIG_FIELD) {
+                     self.signature = Some(Signature::Multisig(multi_sig.into()));
+diff --git a/crates/sui-types/src/signature.rs b/crates/sui-types/src/signature.rs
+index d840ba70..d06b5a86 100644
+--- a/crates/sui-types/src/signature.rs
++++ b/crates/sui-types/src/signature.rs
+@@ -10,6 +10,7 @@ use crate::digests::ZKLoginInputsDigest;
+ use crate::error::{SuiError, SuiErrorKind};
+ use crate::multisig_legacy::MultiSigLegacy;
+ use crate::passkey_authenticator::PasskeyAuthenticator;
++use crate::slh_dsa_authenticator::SlhDsaAuthenticator;
+ use crate::signature_verification::VerifiedDigestCache;
+ use crate::zk_login_authenticator::ZkLoginAuthenticator;
+ use crate::{base_types::SuiAddress, crypto::Signature, error::SuiResult, multisig::MultiSig};
+@@ -101,6 +102,7 @@ pub enum GenericSignature {
+     Signature,
+     ZkLoginAuthenticator,
+     PasskeyAuthenticator,
++    SlhDsaAuthenticator,
+ }
+ 
+ impl GenericSignature {
+@@ -179,6 +181,9 @@ impl GenericSignature {
+             GenericSignature::PasskeyAuthenticator(s) => Ok(CompressedSignature::Passkey(
+                 PasskeyAuthenticatorAsBytes(s.as_ref().to_vec()),
+             )),
++            GenericSignature::SlhDsaAuthenticator(s) => Ok(CompressedSignature::SlhDsa(
++                crate::crypto::SlhDsaSignatureAsBytes(s.as_ref().to_vec()),
++            )),
+             _ => Err(SuiErrorKind::UnsupportedFeatureError {
+                 error: "Unsupported signature scheme".to_string(),
+             }
+@@ -223,6 +228,7 @@ impl GenericSignature {
+             }
+             GenericSignature::ZkLoginAuthenticator(s) => s.get_pk(),
+             GenericSignature::PasskeyAuthenticator(s) => s.get_pk(),
++            GenericSignature::SlhDsaAuthenticator(s) => s.get_pk(),
+             _ => Err(SuiErrorKind::UnsupportedFeatureError {
+                 error: "Unsupported signature scheme".to_string(),
+             }
+@@ -262,6 +268,10 @@ impl ToFromBytes for GenericSignature {
+                     let passkey = PasskeyAuthenticator::from_bytes(bytes)?;
+                     Ok(GenericSignature::PasskeyAuthenticator(passkey))
+                 }
++                SignatureScheme::SlhDsa => {
++                    let slh = SlhDsaAuthenticator::from_bytes(bytes)?;
++                    Ok(GenericSignature::SlhDsaAuthenticator(slh))
++                }
+                 _ => Err(FastCryptoError::InvalidInput),
+             },
+             Err(_) => Err(FastCryptoError::InvalidInput),
+@@ -278,6 +288,7 @@ impl AsRef<[u8]> for GenericSignature {
+             GenericSignature::Signature(s) => s.as_ref(),
+             GenericSignature::ZkLoginAuthenticator(s) => s.as_ref(),
+             GenericSignature::PasskeyAuthenticator(s) => s.as_ref(),
++            GenericSignature::SlhDsaAuthenticator(s) => s.as_ref(),
+         }
+     }
+ }
+diff --git a/crates/sui-types/src/slh_dsa_authenticator.rs b/crates/sui-types/src/slh_dsa_authenticator.rs
+new file mode 100644
+index 00000000..2a379491
+--- /dev/null
++++ b/crates/sui-types/src/slh_dsa_authenticator.rs
+@@ -0,0 +1,253 @@
++// Copyright (c) Mysten Labs, Inc.
++// SPDX-License-Identifier: Apache-2.0
++//
++// Drop this file into `crates/sui-types/src/slh_dsa_authenticator.rs` of a Sui
++// checkout and wire it up per ../INTEGRATION.md. It adds a native, post-quantum
++// `GenericSignature::SlhDsaAuthenticator` so a transaction can be authenticated
++// with ONLY a FIPS-205 SLH-DSA-SHA2-128s signature — no elliptic curve.
++//
++// Modeled on `passkey_authenticator.rs`; the verification is simpler (a raw
++// pk+sig over the standard signing digest). Crypto comes from the workspace's
++// `slh-dsa-sui` crate (RustCrypto `slh-dsa`), which interoperates with the
++// `@sui-gen/pqc` / @noble signer (see crates/slh-dsa-sui/tests/kat.rs).
++
++use crate::crypto::{DefaultHash, PublicKey, SignatureScheme};
++use crate::signature_verification::VerifiedDigestCache;
++use crate::{
++    base_types::{EpochId, SuiAddress},
++    digests::ZKLoginInputsDigest,
++    error::{SuiErrorKind, SuiResult},
++    signature::{AuthenticatorTrait, VerifyParams},
++};
++use fastcrypto::error::FastCryptoError;
++use fastcrypto::hash::HashFunction;
++use fastcrypto::traits::ToFromBytes;
++use once_cell::sync::OnceCell;
++use schemars::JsonSchema;
++use serde::{Deserialize, Serialize};
++use shared_crypto::intent::IntentMessage;
++use std::hash::{Hash, Hasher};
++use std::sync::Arc;
++
++pub const SLH_DSA_PK_BYTES: usize = 32;
++pub const SLH_DSA_SIG_BYTES: usize = 7856;
++
++/// Native SLH-DSA-SHA2-128s authenticator.
++///
++/// Wire format (after the 1-byte `GenericSignature` scheme flag handled by
++/// `GenericSignature::from_bytes`): `pk (32) || sig (7856)`.
++#[derive(Debug, Clone, JsonSchema)]
++pub struct SlhDsaAuthenticator {
++    pk: Vec<u8>,
++    sig: Vec<u8>,
++    #[serde(skip)]
++    bytes: OnceCell<Vec<u8>>,
++}
++
++/// Raw form used for (de)serialization: the flagged blob `flag || pk || sig`.
++#[derive(Serialize, Deserialize, Debug)]
++pub struct RawSlhDsaAuthenticator {
++    pub pk: Vec<u8>,
++    pub sig: Vec<u8>,
++}
++
++impl SlhDsaAuthenticator {
++    pub fn get_pk(&self) -> SuiResult<PublicKey> {
++        Ok(PublicKey::SlhDsa(crate::crypto::SlhDsaPublicKeyAsBytes(
++            self.pk.clone(),
++        )))
++    }
++
++    /// Construct an authenticator from a raw public key (32 B) and signature
++    /// (7856 B), as produced by [crate::crypto::SuiKeyPair::sign_secure_generic].
++    pub fn from_pk_sig(pk: Vec<u8>, sig: Vec<u8>) -> Self {
++        SlhDsaAuthenticator {
++            pk,
++            sig,
++            bytes: OnceCell::new(),
++        }
++    }
++}
++
++impl PartialEq for SlhDsaAuthenticator {
++    fn eq(&self, other: &Self) -> bool {
++        self.pk == other.pk && self.sig == other.sig
++    }
++}
++impl Eq for SlhDsaAuthenticator {}
++impl Hash for SlhDsaAuthenticator {
++    fn hash<H: Hasher>(&self, state: &mut H) {
++        self.as_ref().hash(state);
++    }
++}
++
++impl AuthenticatorTrait for SlhDsaAuthenticator {
++    fn verify_user_authenticator_epoch(
++        &self,
++        _epoch: EpochId,
++        _max_epoch_upper_bound_delta: Option<u64>,
++    ) -> SuiResult {
++        Ok(())
++    }
++
++    fn verify_claims<T>(
++        &self,
++        intent_msg: &IntentMessage<T>,
++        author: SuiAddress,
++        _aux_verify_data: &VerifyParams,
++        _zklogin_inputs_cache: Arc<VerifiedDigestCache<ZKLoginInputsDigest>>,
++    ) -> SuiResult
++    where
++        T: Serialize,
++    {
++        // 1. Address must be derived from this public key.
++        if author != SuiAddress::from(&self.get_pk()?) {
++            return Err(SuiErrorKind::InvalidSignature {
++                error: "Invalid author for SLH-DSA".to_string(),
++            }
++            .into());
++        }
++
++        // 2. Signing message = hash(intent || bcs(tx)) — the same digest Sui
++        //    computes for every scheme.
++        let message = to_signing_message(intent_msg);
++
++        // 3. Verify the post-quantum signature (never panics; returns bool).
++        if slh_dsa_verify(&self.pk, &message, &self.sig) {
++            Ok(())
++        } else {
++            Err(SuiErrorKind::InvalidSignature {
++                error: "SLH-DSA signature verification failed".to_string(),
++            }
++            .into())
++        }
++    }
++}
++
++impl AsRef<[u8]> for SlhDsaAuthenticator {
++    fn as_ref(&self) -> &[u8] {
++        self.bytes
++            .get_or_init(|| {
++                let mut bytes = Vec::with_capacity(1 + self.pk.len() + self.sig.len());
++                bytes.push(SignatureScheme::SlhDsa.flag());
++                bytes.extend_from_slice(&self.pk);
++                bytes.extend_from_slice(&self.sig);
++                bytes
++            })
++            .as_slice()
++    }
++}
++
++impl ToFromBytes for SlhDsaAuthenticator {
++    fn from_bytes(bytes: &[u8]) -> Result<Self, FastCryptoError> {
++        // `bytes` includes the leading scheme flag.
++        if bytes.is_empty() || bytes[0] != SignatureScheme::SlhDsa.flag() {
++            return Err(FastCryptoError::InvalidInput);
++        }
++        let body = &bytes[1..];
++        if body.len() != SLH_DSA_PK_BYTES + SLH_DSA_SIG_BYTES {
++            return Err(FastCryptoError::InputLengthWrong(
++                1 + SLH_DSA_PK_BYTES + SLH_DSA_SIG_BYTES,
++            ));
++        }
++        let (pk, sig) = body.split_at(SLH_DSA_PK_BYTES);
++        Ok(SlhDsaAuthenticator {
++            pk: pk.to_vec(),
++            sig: sig.to_vec(),
++            bytes: OnceCell::new(),
++        })
++    }
++}
++
++/// `hash(intent || bcs(tx))` — Blake2b256 (`DefaultHash`), matching every other scheme.
++fn to_signing_message<T: Serialize>(
++    intent_msg: &IntentMessage<T>,
++) -> [u8; DefaultHash::OUTPUT_SIZE] {
++    let mut hasher = DefaultHash::default();
++    bcs::serialize_into(&mut hasher, intent_msg).expect("serialization should not fail");
++    hasher.finalize().digest
++}
++
++/// Inline FIPS-205 SLH-DSA-SHA2-128s verify via RustCrypto `slh-dsa`.
++fn slh_dsa_verify(pk: &[u8], message: &[u8], sig: &[u8]) -> bool {
++    use slh_dsa::signature::Verifier;
++    use slh_dsa::{Sha2_128s, Signature, VerifyingKey};
++    if pk.len() != SLH_DSA_PK_BYTES || sig.len() != SLH_DSA_SIG_BYTES {
++        return false;
++    }
++    let Ok(vk) = VerifyingKey::<Sha2_128s>::try_from(pk) else { return false; };
++    let Ok(s) = Signature::<Sha2_128s>::try_from(sig) else { return false; };
++    vk.verify(message, &s).is_ok()
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::crypto::{SlhDsaKeyPair, SuiKeyPair};
++    use shared_crypto::intent::{Intent, PersonalMessage};
++
++    /// `from_ikm` is a deterministic function of its input keying material — the
++    /// property that makes BIP-39 mnemonic derivation reproducible.
++    #[test]
++    fn from_ikm_is_deterministic() {
++        let a = SlhDsaKeyPair::from_ikm(b"sui-pq-test-ikm");
++        let b = SlhDsaKeyPair::from_ikm(b"sui-pq-test-ikm");
++        assert_eq!(a.public_key_bytes(), b.public_key_bytes());
++        assert_eq!(a.to_bytes(), b.to_bytes());
++        assert_eq!(a.public_key_bytes().len(), SLH_DSA_PK_BYTES);
++        assert_eq!(a.to_bytes().len(), 64);
++        let c = SlhDsaKeyPair::from_ikm(b"a-different-ikm");
++        assert_ne!(a.public_key_bytes(), c.public_key_bytes());
++    }
++
++    /// An SLH-DSA public key round-trips through Base64 (the form stored in the
++    /// keystore `sui.aliases` file and re-parsed on every wallet load).
++    #[test]
++    fn public_key_base64_round_trips() {
++        use crate::crypto::{EncodeDecodeBase64, SlhDsaKeyPair, SuiKeyPair};
++        let pk = SuiKeyPair::SlhDsa(SlhDsaKeyPair::from_ikm(b"pk-roundtrip")).public();
++        let b64 = pk.encode_base64();
++        let back = PublicKey::decode_base64(&b64).expect("SLH-DSA public key must round-trip");
++        assert_eq!(pk, back);
++        assert_eq!(pk.flag(), SignatureScheme::SlhDsa.flag());
++    }
++
++    /// A key pair derived purely from input keying material signs an intent
++    /// message, and the signature the validator recomputes-and-verifies passes —
++    /// proving a mnemonic-derived SLH-DSA key produces validator-acceptable
++    /// signatures with no elliptic curve anywhere in the path.
++    #[test]
++    fn sign_secure_generic_round_trips_through_verify() {
++        let kp = SuiKeyPair::SlhDsa(SlhDsaKeyPair::from_ikm(b"sui-pq-sign-test"));
++        let msg = PersonalMessage {
++            message: b"post-quantum hello".to_vec(),
++        };
++        let intent_msg = IntentMessage::new(Intent::personal_message(), msg);
++
++        let generic = kp.sign_secure_generic(&intent_msg);
++        let auth = match &generic {
++            crate::signature::GenericSignature::SlhDsaAuthenticator(a) => a,
++            other => panic!("expected SlhDsaAuthenticator, got {other:?}"),
++        };
++
++        // Wire blob = flag(0x07) || pk(32) || sig(7856).
++        let blob = auth.as_ref();
++        assert_eq!(blob.len(), 1 + SLH_DSA_PK_BYTES + SLH_DSA_SIG_BYTES);
++        assert_eq!(blob[0], SignatureScheme::SlhDsa.flag());
++
++        // The signature verifies over exactly the digest the validator computes
++        // in `verify_claims` (Blake2b256 of the BCS-encoded intent message).
++        let digest = to_signing_message(&intent_msg);
++        let pk = &blob[1..1 + SLH_DSA_PK_BYTES];
++        let sig = &blob[1 + SLH_DSA_PK_BYTES..];
++        assert!(
++            slh_dsa_verify(pk, &digest, sig),
++            "validator-side SLH-DSA verify must accept the produced signature"
++        );
++
++        // A tampered message must be rejected.
++        let mut bad = digest;
++        bad[0] ^= 0xff;
++        assert!(!slh_dsa_verify(pk, &bad, sig));
++    }
++}
+diff --git a/crates/sui-types/src/sui_sdk_types_conversions.rs b/crates/sui-types/src/sui_sdk_types_conversions.rs
+index dc89fa8b..c1f73f89 100644
+--- a/crates/sui-types/src/sui_sdk_types_conversions.rs
++++ b/crates/sui-types/src/sui_sdk_types_conversions.rs
+@@ -1160,6 +1160,11 @@ impl TryFrom<crate::crypto::PublicKey> for MultisigMemberPublicKey {
+             crate::crypto::PublicKey::Passkey(p) => {
+                 Self::Passkey(PasskeyPublicKey::new(Secp256r1PublicKey::new(p.0)))
+             }
++            crate::crypto::PublicKey::SlhDsa(_) => {
++                return Err(SdkTypeConversionError(
++                    "SLH-DSA cannot be a multisig member".to_string(),
++                ))
++            }
+         }
+         .pipe(Ok)
+     }
+@@ -1183,6 +1188,11 @@ impl TryFrom<crate::crypto::CompressedSignature> for MultisigMemberSignature {
+                 Self::ZkLogin(Box::new(z.try_into()?))
+             }
+             crate::crypto::CompressedSignature::Passkey(p) => Self::Passkey(p.try_into()?),
++            crate::crypto::CompressedSignature::SlhDsa(_) => {
++                return Err(SdkTypeConversionError(
++                    "SLH-DSA cannot be a multisig member".to_string(),
++                ))
++            }
+         }
+         .pipe(Ok)
+     }
+@@ -1233,6 +1243,7 @@ impl From<crate::crypto::SignatureScheme> for SignatureScheme {
+             crate::crypto::SignatureScheme::MultiSig => Self::Multisig,
+             crate::crypto::SignatureScheme::ZkLoginAuthenticator => Self::ZkLogin,
+             crate::crypto::SignatureScheme::PasskeyAuthenticator => Self::Passkey,
++            crate::crypto::SignatureScheme::SlhDsa => Self::Passkey,
+         }
+     }
+ }
+diff --git a/crates/sui-types/src/transaction.rs b/crates/sui-types/src/transaction.rs
+index 8372568a..a996b58e 100644
+--- a/crates/sui-types/src/transaction.rs
++++ b/crates/sui-types/src/transaction.rs
+@@ -3867,7 +3867,9 @@ impl SenderSignedData {
+                         .into());
+                     }
+                 }
+-                GenericSignature::Signature(_) | GenericSignature::MultiSigLegacy(_) => (),
++                GenericSignature::Signature(_)
++                | GenericSignature::MultiSigLegacy(_)
++                | GenericSignature::SlhDsaAuthenticator(_) => (),
+             }
+         }
+ 
+diff --git a/crates/sui/src/client_commands.rs b/crates/sui/src/client_commands.rs
+index 1a3f4380..f54d68dc 100644
+--- a/crates/sui/src/client_commands.rs
++++ b/crates/sui/src/client_commands.rs
+@@ -3455,15 +3455,16 @@ async fn dry_run_or_execute_or_serialize_impl(
+         let signatures = if forking_mode {
+             vec![]
+         } else {
++            // Use the generic signing path so any scheme works, including the
++            // post-quantum SLH-DSA authenticator (no compact `Signature` form).
+             let mut signatures = vec![
+                 context
+-                    .sign_secure(
++                    .sign_secure_generic(
+                         &KeyIdentity::Address(signer),
+                         &tx_data,
+                         Intent::sui_transaction(),
+                     )
+-                    .await?
+-                    .into(),
++                    .await?,
+             ];
+ 
+             if let Some(gas_sponsor) = gas_sponsor
+@@ -3471,13 +3472,12 @@ async fn dry_run_or_execute_or_serialize_impl(
+             {
+                 signatures.push(
+                     context
+-                        .sign_secure(
++                        .sign_secure_generic(
+                             &KeyIdentity::Address(gas_sponsor),
+                             &tx_data,
+                             Intent::sui_transaction(),
+                         )
+-                        .await?
+-                        .into(),
++                        .await?,
+                 );
+             }
+             signatures
+diff --git a/crates/sui/src/keytool.rs b/crates/sui/src/keytool.rs
+index df5da04e..f42a28b0 100644
+--- a/crates/sui/src/keytool.rs
++++ b/crates/sui/src/keytool.rs
+@@ -729,6 +729,9 @@ impl KeyToolCommand {
+                             SuiKeyPair::Ed25519(kp) => kp.encode_base64(),
+                             SuiKeyPair::Secp256k1(kp) => kp.encode_base64(),
+                             SuiKeyPair::Secp256r1(kp) => kp.encode_base64(),
++                            // SLH-DSA is an account scheme only (never a
++                            // network/worker key); encode the raw signing key.
++                            SuiKeyPair::SlhDsa(kp) => Base64::encode(kp.to_bytes()),
+                         };
+                         KeypairData {
+                             account_keypair: keypair.encode_base64(),
+@@ -866,8 +869,11 @@ impl KeyToolCommand {
+                 let mut hasher = DefaultHash::default();
+                 bcs::serialize_into(&mut hasher, &intent_msg)?;
+                 let digest = hasher.finalize().digest;
++                // Generic signing path so SLH-DSA (which has no compact
++                // `Signature` form) also works; for EC schemes this is the same
++                // signature wrapped as a `GenericSignature`.
+                 let sui_signature = context
+-                    .sign_secure(&address.into(), &intent_msg.value, intent_msg.intent)
++                    .sign_secure_generic(&address.into(), &intent_msg.value, intent_msg.intent)
+                     .await?;
+                 CommandOutput::Sign(SignData {
+                     sui_address: address,
