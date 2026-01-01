@@ -95,6 +95,7 @@ Per-area deep dives live under [`docs/`](./docs):
 - [Post-quantum cryptography](./docs/post-quantum.md) — off-chain `@sui-gen/pqc`, on-chain `wots`/`slh_dsa`/`pq_guard`
 - [Local PQ validator fork](./docs/local-pq-validator.md) — patch + build script for a Sui node that natively verifies SLH-DSA-LITE
 - [Mysten-side PQ validator roadmap](./docs/pq-validator-roadmap.md) — the upstream changes that would close the last remaining gap
+- [Formal verification](./VERIFICATION.md) — the FIPS-205 verifier, machine-checked in Lean 4 ([`proofs/`](./proofs)): spec ≡ noble/NIST KATs, a 100%-bytecode verifier, and every compiled `sha2_128s.mv` function proven ≡ spec opcode-for-opcode (403 theorems)
 
 ## License
 

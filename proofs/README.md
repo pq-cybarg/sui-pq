@@ -6,24 +6,27 @@ defined here so the entire trusted compute base IS the source tree of this direc
 
 ## Status snapshot
 
-23 build jobs, all green. ~750 LOC of Lean, zero external deps.
+88 build jobs, all green. Zero external deps.
 
-| Component | LOC | Proofs |
-| --- | ---: | --- |
-| `Fips205/Params.lean` — FIPS-205 §10.1 constants + self-checks | 65 | 6 `native_decide` consistency proofs |
-| `Fips205/Bytes.lean` — BE encoding + hex decode | 80 | 3 `native_decide` KATs |
-| `Fips205/Adrs.lean` — 22-byte compressed ADRS | 50 | 1 size invariant |
-| `Fips205/Sha256.lean` — pure-Lean SHA-256 (FIPS 180-4) | 135 | 2 FIPS 180-4 KATs |
-| `Fips205/Thash.lean` — F = H = T_l, MGF1, H_msg | 50 | — |
-| `Fips205/Wots.lean` — WOTS+ chain, baseW, msgToChainDigits | 75 | — |
-| `Fips205/Verify.lean` — FORS, Hypertree, top-level `verify` | 125 | — |
-| `Fips205/Kat.lean` — 10 noble acceptance + 4 rejection theorems | ~150 | **14 verifier-execution proofs** |
-| `Fips205/NistKat.lean` — 14 NIST ACVP official test cases | ~170 | **14 verifier-execution proofs** |
-| `Fips205/MoveEquiv.lean` — Move-source ↔ Lean-spec equivalence scaffold | ~85 | 1 worked example proven |
-| `KatRunner.lean` — differential harness driver (Lean exe) | 60 | — |
+| Component | Proofs |
+| --- | --- |
+| `Fips205/Params.lean` — FIPS-205 §10.1 constants + self-checks | 6 `native_decide` consistency proofs |
+| `Fips205/Bytes.lean` — BE encoding + hex decode | 3 `native_decide` KATs |
+| `Fips205/Adrs.lean` — 22-byte compressed ADRS | 1 size invariant |
+| `Fips205/Sha256.lean` — pure-Lean SHA-256 (FIPS 180-4) | 2 FIPS 180-4 KATs |
+| `Fips205/{Thash,Wots,Verify}.lean` — F/H/T_l, MGF1, H_msg, WOTS+, FORS, HT, `verify` | spec definitions |
+| `Fips205/Kat.lean` — 10 noble acceptance + 4 rejection theorems | 14 verifier-execution proofs |
+| `Fips205/NistKat.lean` — 14 NIST ACVP official test cases | 14 verifier-execution proofs |
+| `Fips205/MoveEquiv.lean` — Move-source ↔ Lean-spec equivalence | 19 `rfl` theorems |
+| `Fips205/Structural.lean` — totality + adversarial witnesses | totality + 10 witnesses |
+| `Move/` — Move VM + structural bytecode primitives | ~50 `native_decide` proofs |
+| `Move/Composition.lean` — `verifyViaBC` / `_full` / `_total` | 53 proofs incl. 19 `_total` capstones |
+| `Move/*Real.lean` (21 modules) — every `sha2_128s.mv` function, opcode-for-opcode | **111 `native_decide` proofs** |
+| `Kat{,BC}Runner.lean` — spec / bytecode verifier exe drivers | — |
 
-**Total machine-checked proofs: 40+**, including 28 separate executions of the
-full FIPS-205 verifier under Lean's kernel.
+**Total machine-checked theorems / examples: 403**, including ~140 separate
+executions of the full FIPS-205 verifier (spec, composed-bytecode, and
+real-compiled-bytecode) under Lean's kernel.
 
 ## What's machine-checked
 
@@ -52,8 +55,8 @@ full FIPS-205 verifier under Lean's kernel.
    `packages/pqc/scripts/lean-diff-noble.ts` runs 100 random tuples through
    both Lean and noble and confirms perfect agreement.
 
-7. **Move source ↔ Lean spec equivalence** (`MoveEquiv.lean`): **16
-   equivalence theorems + 1 corollary**, covering every function in the
+7. **Move source ↔ Lean spec equivalence** (`MoveEquiv.lean`): **19
+   equivalence theorems**, covering every function in the
    FIPS-205 verifier:
    - Byte primitives (`slice`, `truncate`)
    - ADRS serialisation (`adrsCompress`)
@@ -65,15 +68,13 @@ full FIPS-205 verifier under Lean's kernel.
 
    Each Lean transcription mirrors the Move source's loop structure
    exactly, with `thash` references that compose via `thash_equiv`. The
-   structural identity makes all 16 proofs `rfl` — the Lean transcription
-   *is* the spec, expressed in a Move-source-shaped style. A corollary
-   demonstrates that `verifyMove` accepts the noble KAT we already proved
-   against, composing `verify_equiv` with `accepts_noble_kat_0`.
+   structural identity makes all 19 proofs `rfl` — the Lean transcription
+   *is* the spec, expressed in a Move-source-shaped style.
 
-   The remaining trust gap is the human-reviewable correspondence between
-   our Lean transcription and the actual Move source file. Both have
-   identical loop structures, identical field-access patterns, identical
-   intermediate buffers — auditable by anyone literate in both languages.
+   This source-level mirror is now *backed* by the `Move/*Real.lean`
+   bytecode-equivalence layer (item 10): we no longer only argue "the Lean
+   transcription looks like the Move source" — we execute the *actual
+   compiled bytecode* of every function and prove it computes the spec.
 
 8. **Extraction fidelity** (Phase A): the `lake exe kat` binary, when run
    on all 14 NIST ACVP official vectors, produces the same accept/reject
@@ -86,12 +87,28 @@ full FIPS-205 verifier under Lean's kernel.
    pre-generated; CI replay through Lean exe takes ~9 seconds. Lets us run
    1000-case coverage on every commit without 30-minute live-noble runs.
 
-10. **Move VM bytecode semantics** (`proofs/Move/`): a small Move abstract
-    machine in Lean — `Value`, `State`, `Opcode` (25+ instructions), `step`,
-    `run`. Includes `Move/Example.lean` proving bytecode ↔ spec equivalence
-    end-to-end on a `byteEq(a,b)` example via `native_decide`. The same
-    technique scales to the full FIPS-205 verifier bytecode — bounded
-    effort, no open mathematical problems.
+10. **Move VM bytecode semantics + full real-bytecode coverage**
+    (`proofs/Move/`): a Move abstract machine in Lean — `Value`, `State`,
+    `Opcode` (~49 instructions incl. mutable/immutable references,
+    cross-frame `Call`, `FreezeRef`, polymorphic integer ops), `step`,
+    `run`. On top of it:
+    - **`verifyViaBC_total`** (`Composition.lean`): a 100%-bytecode FIPS-205
+      verifier — slice, hmsg, split_digest, FORS, WOTS+ chains, hypertree all
+      run as Move VM bytecode. Proven equal to `Verify.verify` on all 10
+      noble + 14 NIST KATs and to reject tampered/wrong inputs (19 capstones).
+    - **`Move/*Real.lean` (21 modules)**: every function in the *actual
+      compiled* `move/slh_dsa_128s/.../sha2_128s.mv` is re-encoded
+      opcode-for-opcode from `sui move disassemble` (every PC + operand
+      matches) and proven equivalent to the spec via `native_decide` — 111
+      proofs, up to 6-deep `Call` nesting (`ht_root_from_sig` →
+      `xmss_pk_from_sig` → `wots_pk_from_sig` → `chain` →
+      `adrs_set_tree_index` → `write_u32_be`).
+    - **`kat-bc` exe + `lean-diff-bc.ts`**: runs the spec verifier and the
+      100%-bytecode verifier over the 1,000-case fixture; 0 mismatches.
+
+    The "bytecode-level Move VM equivalence" that earlier docs listed as a
+    hard multi-month milestone is **done**. The one remaining trusted edge is
+    "our VM `step` semantics ≡ Sui's production Rust VM".
 
 11. **F\* port skeleton** (`proofs/fstar-sketch/`): a concrete sketch of
     the Path B verified-extraction work (Lean → F\* → KaRaMeL → CompCert).
@@ -138,10 +155,11 @@ asserts every case agrees.
 
 | | Before this verification work | Now |
 | --- | --- | --- |
-| Spec compliance (algorithmic correctness) | human review of 480-LOC Move | machine-checked equivalence to noble on 10+14=24 specific vectors, plus 100-case differential |
+| Spec compliance (algorithmic correctness) | human review of 480-LOC Move | machine-checked equivalence to noble on 10+14=24 specific vectors, plus 100- and 1000-case differentials |
 | NIST compliance | "we built to FIPS 205" | NIST-published vectors prove acceptance via `native_decide` |
-| Tamper-detection | unit tests in Move | `rejects_*` theorems machine-checked |
-| Implementation correctness (Move) | trust the Move VM | `MoveEquiv` scaffold + 1 proven equivalence + recipe for the rest |
+| Tamper-detection | unit tests in Move | `rejects_*` theorems machine-checked (spec + bytecode verifiers) |
+| Implementation correctness (Move source) | trust the Move VM | `MoveEquiv` — 19 `rfl` theorems, every function |
+| Implementation correctness (compiled bytecode) | trust the Move compiler | `Move/*Real.lean` — every `sha2_128s.mv` function executed opcode-for-opcode and proven ≡ spec |
 
 ## Why no Mathlib
 
@@ -156,19 +174,19 @@ hand-rolled SHA-256 to keep the audit surface minimal.
 ### Done
 - ✅ Executable Lean spec of FIPS-205 §10.3 verify
 - ✅ Self-checked SHA-256 against FIPS 180-4 KATs
-- ✅ 10 noble-KAT acceptance theorems
-- ✅ 4 rejection theorems
+- ✅ 10 noble-KAT acceptance theorems + 4 rejection theorems
 - ✅ 14 NIST ACVP official test vectors proven matching
-- ✅ 100-case differential harness (Lean exe vs noble)
-- ✅ Move-equivalence scaffolding + 1 worked proof
+- ✅ 100-case + 1000-case differential harnesses (Lean exe vs noble)
+- ✅ Move-source equivalence: all 19 functions, `rfl` (`MoveEquiv.lean`)
+- ✅ **Move VM bytecode semantics** (~49 opcodes, refs, cross-frame `Call`)
+- ✅ **`verifyViaBC_total`**: 100%-bytecode verifier ≡ spec on 10 noble + 14 NIST
+- ✅ **Full real-bytecode coverage**: every `sha2_128s.mv` function encoded
+  opcode-for-opcode from the disassembly and proven ≡ spec (`Move/*Real.lean`)
+- ✅ Spec-vs-bytecode 1000-case differential (`kat-bc` + `lean-diff-bc.ts`)
 
-### Next (incremental, each ~1 session)
-- Multi-thousand-case differential harness; lock in as CI gate
-- Extend `MoveEquiv.lean`: prove equivalence for `slice`, `thash`, `baseW`,
-  `chain`, climbing up to the full `verify`. Each is mechanical induction.
-- Verified extraction of `Fips205.Verify.verify` to OCaml or C, then to
-  native via CompCert (Path A in the verification roadmap).
-
-### Long-term
-- Bytecode-level Move semantics in Lean (the "verify all the way down"
-  Move VM equivalence — the hard, multi-month milestone).
+### Next
+- Mechanise that our Move VM `step` relation refines Sui's production Rust VM
+  (the last trusted interpreter edge).
+- Verified extraction of `Fips205.Verify.verify` to C via the
+  F\*/KaRaMeL/CompCert pipeline (`EXTRACTION.md`, Path A).
+- Wire the spec-vs-bytecode differential in as a CI gate.

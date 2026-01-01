@@ -42,6 +42,21 @@ import Move.Composition
 
 /-! # Move VM semantics + bytecode equivalence
 
-Top-level entry point for the `Move` library. See `proofs/Move/Example.lean`
-for the proof-of-concept end-to-end bytecode ↔ spec equivalence.
+Top-level entry point for the `Move` library: a Move abstract machine in Lean
+(`Value`/`Stack`/`Opcode`/`Step`/`Native`, ~49 opcodes including mutable &
+immutable references, cross-frame `Call`, `FreezeRef`, and polymorphic integer
+ops) plus the proofs built on it.
+
+Layers, smallest to largest:
+  * `Example.lean` — the original proof-of-concept (`byteEq` bytecode ≡ spec).
+  * Per-primitive structural bytecode ≡ spec: `Slice`, `PkSeedPadded`, `Thash`,
+    `BaseW`, `WotsChecksum`, `Mgf1`, `Hmsg`, `SplitDigest`,
+    `ExtractForsIndices`, the ADRS setters.
+  * `Composition.lean` — `verifyViaBC` / `_full` / `_total`. `verifyViaBC_total`
+    is a 100%-bytecode FIPS-205 verifier proven ≡ `Verify.verify` on all 10
+    noble + 14 NIST KATs (19 capstones).
+  * `*Real.lean` (21 modules) — every function in the *actual compiled*
+    `move/slh_dsa_128s/.../sha2_128s.mv` (via `sui move disassemble`), encoded
+    opcode-for-opcode and proven ≡ spec under this VM, up to 6-deep `Call`
+    nesting. `MoveStdlib.lean` models `vector::append` as a `Call` callee.
 -/

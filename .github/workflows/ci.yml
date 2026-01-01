@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# pnpm version comes from the "packageManager" field in package.json; do NOT
+# also pass a `version:` to pnpm/action-setup or it errors with
+# "Multiple versions of pnpm specified".
+
 jobs:
   ts:
     name: TypeScript
@@ -12,8 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -27,6 +29,9 @@ jobs:
   move:
     name: Move
     runs-on: ubuntu-latest
+    env:
+      # Pinned to match scripts/build-pq-validator.sh (SUI_REV) + the local toolchain.
+      SUI_VERSION: "1.72.2"
     steps:
       - uses: actions/checkout@v4
       - name: Cache sui CLI
@@ -34,14 +39,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.local/bin/sui
-          key: sui-${{ runner.os }}-mainnet
+          key: sui-${{ runner.os }}-mainnet-v${{ env.SUI_VERSION }}
       - name: Install sui CLI
         if: steps.cache-sui.outputs.cache-hit != 'true'
         run: |
-          mkdir -p ~/.local/bin
-          curl -fsSL https://github.com/MystenLabs/sui/releases/latest/download/sui-mainnet-ubuntu-x86_64.tgz | tar -xz -C ~/.local/bin
-          chmod +x ~/.local/bin/sui
+          mkdir -p ~/.local/bin "$RUNNER_TEMP/sui-dl"
+          url="https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz"
+          echo "downloading $url"
+          curl -fsSL "$url" | tar -xz -C "$RUNNER_TEMP/sui-dl"
+          # Release tarball layout has varied across versions; find the sui binary wherever it landed.
+          sui_bin="$(find "$RUNNER_TEMP/sui-dl" -type f -name sui | head -1)"
+          test -n "$sui_bin" || { echo "sui binary not found in tarball"; exit 1; }
+          install -m 0755 "$sui_bin" ~/.local/bin/sui
       - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - run: sui --version
       - run: bash scripts/move-all.sh build
       - run: bash scripts/move-all.sh test
 
@@ -51,8 +62,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -77,9 +86,11 @@ jobs:
 
       - name: Run the FIPS-205 verification pipeline
         run: pnpm verify
-        # ↑ lake build (90+ machine-checked theorems including SHA-256 KATs,
-        #   28 verifier-execution proofs, 17 Move-source equivalences,
-        #   structural invariants, Move-bytecode equivalences)
+        # ↑ lake build (403 machine-checked theorems/examples, 88 build jobs:
+        #   SHA-256 KATs, 28 verifier-execution proofs, 19 Move-source `rfl`
+        #   equivalences, structural invariants, ~50 structural-bytecode proofs,
+        #   111 real-compiled-bytecode proofs across 21 Move/*Real modules,
+        #   and the verifyViaBC_total 100%-bytecode capstones)
         # + Lean exe vs all 14 NIST ACVP official vectors
         # + 100-case live differential vs noble
         # + 1000-case fixture replay through the compiled Lean exe

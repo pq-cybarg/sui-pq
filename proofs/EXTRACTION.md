@@ -141,10 +141,19 @@ this project; the constraint is calendar time, not capability.
 
 ## Current state, restated
 
+This doc is about the **extraction** arm (Lean → native binary). The other
+arm of "verify all the way down" — Lean spec → Move source → *compiled Move
+bytecode* — is now complete: a 100%-bytecode verifier (`verifyViaBC_total`)
+is proven ≡ spec on all 10 noble + 14 NIST KATs, and every function in the
+actual compiled `sha2_128s.mv` is pinned opcode-for-opcode to the
+disassembly and proven ≡ spec (`Move/*Real.lean`). See `../VERIFICATION.md`.
+
+On the extraction arm specifically:
+
 - ✅ Lean spec proven equivalent to noble + NIST on 28 specific test vectors
-- ✅ Lean spec proven equivalent to noble on 100 random differential cases
+- ✅ Lean spec proven equivalent to noble on 100 (and 1000) differential cases
 - ✅ Lean-compiled binary fidelity verified on the 14 NIST official vectors
-- ❌ End-to-end verified extraction from Lean source to native binary
+- ❌ End-to-end *verified* extraction from Lean source to native binary
   (Phase A: empirically fine; formally: requires Path 1 or Path 2)
 
 That's the honest picture. Phase A is what ships now and it's already strong

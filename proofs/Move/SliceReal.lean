@@ -59,8 +59,8 @@ Verified by `native_decide` against:
 
 If those agree on representative inputs, then the existing chain
   spec ← bytecode-model ← {real bytecode patterns}
-is closed for `slice`. The same technique extends to the other primitives;
-left as bounded-effort follow-up.
+is closed for `slice`. The same technique has since been applied to **every**
+function in `sha2_128s.mv` — see the other `Move/*Real.lean` modules.
 -/
 
 namespace Fips205.Move.SliceReal

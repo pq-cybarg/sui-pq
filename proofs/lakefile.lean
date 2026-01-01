@@ -4,11 +4,15 @@ open Lake DSL
 /-!
 Formal verification of FIPS-205 SLH-DSA-SHA2-128s.
 
-Goals (incremental):
-  1. Executable Lean spec of FIPS-205 §10.3 (verify).
-  2. Run the spec on noble-generated KAT vectors; ground-truth equivalence.
-  3. Prove the TS reference / Move impl byte-format compatibility against the spec.
-  4. Stretch: verified Rust extraction for a native Sui module.
+Goals:
+  1. Executable Lean spec of FIPS-205 §10.3 (verify).                    [done]
+  2. Run the spec on noble + NIST KAT vectors; ground-truth equivalence. [done]
+  3. Move-source <-> spec equivalence, every function (`rfl`).           [done]
+  4. A Move VM in Lean + a 100%-bytecode verifier (`verifyViaBC_total`)
+     proven == spec, with every compiled `sha2_128s.mv` function pinned
+     opcode-for-opcode to the disassembly (`Move/*Real.lean`).           [done]
+  5. Stretch: refine our Move VM `step` to Sui's production VM; verified
+     Rust/C extraction for a native module (`EXTRACTION.md`).            [open]
 -/
 
 package fips205 where

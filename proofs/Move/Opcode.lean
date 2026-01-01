@@ -65,8 +65,8 @@ inductive Opcode where
   | VecLen                     -- pop vec, push (length : u64)
   | VecPushBack                -- pop value, pop vec, push (vec with value appended)
   | VecPopBack                 -- pop vec, push popped value, push (vec with last elem removed)
-  | VecImmBorrow               -- pop idx, pop vec, push (vec[idx] : value)
-  | VecMutBorrow               -- same but produces a mutable ref (we model identically for now)
+  | VecImmBorrow               -- pop idx, pop vec, push (vec[idx] : value); derefs a `locRef` vec
+  | VecMutBorrow               -- pop idx, pop vec; on a `locRef` produces `vecElemRef loc idx` (for WriteRef), else the element value
   | VecAppend                  -- pop vec2, pop vec1, push (vec1 ++ vec2). Equivalent to Move's vector::append.
   | VecSet                     -- pop u8 val, pop u64 idx, pop vec<u8>, push vec' where vec'[idx]=val.
                                -- Models Move's MutBorrow + WriteRef on a vector<u8> element.

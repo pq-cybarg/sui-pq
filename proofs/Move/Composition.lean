@@ -459,8 +459,12 @@ can now state the full FIPS-205 verifier as composition of building blocks
 that are each individually machine-checked. -/
 
 /-- The verify recipe: H_msg + split_digest + FORS + HT + final equality.
-    Uses spec-level H_msg (not bytecode) since we haven't encoded MGF1 in
-    bytecode; everything else is the proven-bytecode composition. -/
+    This is the FIRST of three increasingly-bytecode flavours: it uses
+    spec-level `H_msg` + `split_digest` and the proven-bytecode composition
+    for everything else. `verifyViaBC_full` then swaps in bytecode
+    `split_digest` + `extract_fors_indices`, and `verifyViaBC_total` swaps in
+    bytecode `H_msg` too — making it 100% Move VM bytecode. All three are
+    kept so the per-swap equivalence is itself machine-checked. -/
 def verifyViaBC (pk msg sig : ByteArray) (ctx : ByteArray := ByteArray.empty) : Bool :=
   if pk.size ≠ Fips205.pk_bytes then false
   else if sig.size ≠ Fips205.sig_bytes then false
@@ -730,16 +734,14 @@ theorem verifyViaBC_equiv_spec_on_nist_254 :
 
 /-! ## 100%-bytecode verifier composition
 
-`verifyViaBC_full` removes the last two spec-function calls from
-`verifyViaBC`: `Verify.splitDigest` is replaced by the proven bytecode
+`verifyViaBC_full` removes two more spec-function calls from `verifyViaBC`:
+`Verify.splitDigest` is replaced by the proven bytecode
 `SplitDigest.splitDigestMoveBC`, and `Verify.extractForsIndices` (used
-inside the FORS path) is replaced by `ExtractForsIndices.extractForsIndicesMoveBC`.
+inside the FORS path) by `ExtractForsIndices.extractForsIndicesMoveBC`.
 
-The only remaining spec call is `Thash.hmsg` (the message-digest function
-that wraps SHA-256 with MGF1) — encoding MGF1's loop in bytecode would
-require modelling several more SHA-256 calls; it's a logical next-step
-but not in this iteration.
--/
+The only spec call left in `_full` is `Thash.hmsg`; `verifyViaBC_total`
+(below) replaces that with `Hmsg.hmsgMoveBC`, making the verifier 100%
+Move VM bytecode. -/
 
 /-- FORS verify using the *bytecode* extract_fors_indices. -/
 def forsPkFromSigViaBC_full
@@ -752,9 +754,9 @@ def forsPkFromSigViaBC_full
                        (AdrsSetters.adrsSetTypeMoveBC adrs AdrsType.fors_roots) 0) 0
   Thash.thashMoveBC pre rootsAdrs rootsBuf
 
-/-- The 100%-bytecode verifier. Uses ONLY proven-bytecode-equivalent
-    primitives for everything except H_msg (which still uses the spec function
-    for now). -/
+/-- Nearly-complete bytecode verifier: proven-bytecode primitives for
+    everything except `H_msg`, which still uses the spec function here.
+    `verifyViaBC_total` removes that last spec call. -/
 def verifyViaBC_full (pk msg sig : ByteArray) (ctx : ByteArray := ByteArray.empty) : Bool :=
   if pk.size ≠ Fips205.pk_bytes then false
   else if sig.size ≠ Fips205.sig_bytes then false
