@@ -11,7 +11,7 @@ bytecode-equivalence proofs.
 ## Post-quantum
 
 - [Post-quantum cryptography](./post-quantum.md) — off-chain `@sui-gen/pqc`; on-chain `wots` / `slh_dsa` / `pq_guard`.
-- [Local PQ validator fork](./local-pq-validator.md) — patch + build script for a Sui node that natively verifies SLH-DSA-LITE.
+- [Local PQ validator fork](./local-pq-validator.md) — patches + build script for a Sui node that natively verifies **FIPS-205 SLH-DSA** (flag `0x07`): mnemonic-derived accounts and native `sui client transfer-sui`.
 - [Mysten-side PQ validator roadmap](./pq-validator-roadmap.md) — the upstream changes that would close the last gap.
 - [**Formal verification**](https://github.com/pq-cybarg/sui-pq/blob/main/VERIFICATION.md) — the FIPS-205 verifier, machine-checked in Lean 4: spec ≡ noble/NIST KATs, a 100%-bytecode verifier, and every compiled `sha2_128s.mv` function proven ≡ spec opcode-for-opcode (403 theorems).
 

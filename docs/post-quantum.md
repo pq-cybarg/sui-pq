@@ -119,7 +119,7 @@ bash scripts/build-pq-validator.sh           # one-time: clone + patch + build (
 bash scripts/build-pq-validator.sh --launch-only   # subsequent runs
 ```
 
-Two patch files in [`patches/`](../patches) add `SignatureScheme::SlhDsaLite` (flag `0x07`) to a local Sui fork. The patched `sui-node` accepts SLH-DSA-LITE signatures directly — gas paid by the PQ-derived address, no classical key anywhere.
+The patches in [`patches/`](../patches) add `SignatureScheme::SlhDsa` (flag `0x07`, **standard FIPS-205 SLH-DSA-SHA2-128s**) to a local Sui fork: the node verifies it natively, accounts derive from a BIP-39 mnemonic (`sui client new-address slhdsa`), and `sui client transfer-sui` submits PQ transactions natively over gRPC — gas paid by the PQ-derived address, no classical key anywhere. See [`docs/local-pq-validator.md`](./local-pq-validator.md) for the full picture.
 
 ## Scheme reference
 
