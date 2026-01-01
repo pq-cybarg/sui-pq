@@ -8,6 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "demo:localnet": "SUI_NETWORK=localnet tsx demos/localnet-pq/run.ts",
     "setup": "bash scripts/setup.sh",
     "bootstrap": "bash scripts/setup.sh",
     "setup:sui": "bash scripts/install-sui.sh",

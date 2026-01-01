@@ -54,7 +54,7 @@ fun concat(a: &vector<u8>, b: &vector<u8>): vector<u8> {
 }
 
 fun slice(src: &vector<u8>, start: u64, len: u64): vector<u8> {
-    let mut out = vector::empty<u8>();
+    let mut out = vector<u8>[];
     let mut i = 0;
     while (i < len) {
         vector::push_back(&mut out, *vector::borrow(src, start + i));
@@ -191,7 +191,7 @@ public fun fors_root_from_sig(
     let mut adrs_leaf = adrs_with(0, tree_idx, TYPE_FORS_TREE, 0);
     let mut adrs_tree = adrs_with(0, tree_idx, TYPE_FORS_TREE, 0);
 
-    let mut roots = vector::empty<u8>();
+    let mut roots = vector<u8>[];
     let mut i: u64 = 0;
     while (i < K) {
         let off = i * chunk;
@@ -245,7 +245,7 @@ fun split_digest(digest: &vector<u8>): (vector<u32>, u64, u32) {
         v = (v << 8) | (*vector::borrow(digest, i) as u64);
         i = i + 1;
     };
-    let mut fors = vector::empty<u32>();
+    let mut fors = vector<u32>[];
     let mask: u64 = (1u64 << (A as u8)) - 1;
     let mut j: u64 = 0;
     while (j < K) {
@@ -254,7 +254,7 @@ fun split_digest(digest: &vector<u8>): (vector<u32>, u64, u32) {
         j = j + 1;
     };
     // FORS indices are in reverse: vec[K-1] was the lowest A bits, etc.
-    let mut reversed = vector::empty<u32>();
+    let mut reversed = vector<u32>[];
     let mut r: u64 = K;
     while (r > 0) {
         r = r - 1;

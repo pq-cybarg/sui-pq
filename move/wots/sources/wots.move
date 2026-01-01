@@ -31,12 +31,10 @@ use sui::event;
 const N: u64 = 32;
 const W: u8  = 16;
 const LEN_1: u64 = 64;   // ceil(8 * 32 / 4)
-const LEN_2: u64 = 3;    // ceil(lg(64 * 15) / 4) + 1
-const LEN:   u64 = 67;   // = len_1 + len_2
+const LEN:   u64 = 67;   // = len_1 (64) + len_2 (3)
 
-// FIPS 205 type-byte constants for the address structure.
+// FIPS 205 type-byte constant for the address structure.
 const TYPE_WOTS_HASH:  u32 = 0;
-const TYPE_WOTS_PK:    u32 = 1;
 
 // ── error codes ────────────────────────────────────────────────────────────
 const EBadLength:    u64 = 1;
@@ -135,7 +133,7 @@ public fun pk_from_sig(
 
     let chains = msg_to_chains(msg_digest);
 
-    let mut tops = vector::empty<u8>();
+    let mut tops = vector<u8>[];
     let mut i = 0;
     while (i < LEN) {
         let start = (*vector::borrow(&chains, i) as u8);
@@ -165,7 +163,7 @@ public fun pk_from_sig(
 
 // ── internal: chain hash F(seed, ADRS, M) = SHA-256(seed || ADRS || M) ─────
 fun chain_hash(seed: &vector<u8>, adrs: &vector<u8>, m: &vector<u8>): vector<u8> {
-    let mut buf = vector::empty<u8>();
+    let mut buf = vector<u8>[];
     extend(&mut buf, seed);
     extend(&mut buf, adrs);
     extend(&mut buf, m);
@@ -175,7 +173,7 @@ fun chain_hash(seed: &vector<u8>, adrs: &vector<u8>, m: &vector<u8>): vector<u8>
 // ── base-w decode of (msg_digest || checksum) into LEN nibbles ─────────────
 fun msg_to_chains(msg: &vector<u8>): vector<u64> {
     // First LEN_1 nibbles come from the message digest (high nibble first).
-    let mut out = vector::empty<u64>();
+    let mut out = vector<u64>[];
     let mut i = 0;
     while (i < N) {
         let b = *vector::borrow(msg, i);
@@ -217,7 +215,7 @@ fun extend(dst: &mut vector<u8>, src: &vector<u8>) {
 }
 
 fun slice(src: &vector<u8>, start: u64, len: u64): vector<u8> {
-    let mut out = vector::empty<u8>();
+    let mut out = vector<u8>[];
     let mut i = 0;
     while (i < len) {
         vector::push_back(&mut out, *vector::borrow(src, start + i));
@@ -248,7 +246,7 @@ fun write_u32(buf: &mut vector<u8>, off: u64, v: u32) {
 
 /// `width` bytes of `v`, big-endian.
 fun u64_to_be_bytes(v: u64, width: u64): vector<u8> {
-    let mut out = vector::empty<u8>();
+    let mut out = vector<u8>[];
     let mut i: u64 = 0;
     while (i < width) {
         let shift = (width - 1 - i) * 8;

@@ -12,7 +12,8 @@ public fun describe(): vector<u8> {
 }
 
 /// Example signature you'd expose, accepting a coin and routing through DeepBook.
-public fun route<Base, Quote>(input: Coin<Base>): Coin<Base> {
-    // Intentionally a no-op pass-through. Replace with real DeepBook swap.
+public fun route<Base>(input: Coin<Base>): Coin<Base> {
+    // Intentionally a no-op pass-through. Replace with real DeepBook swap
+    // (which would add a `Quote` type parameter and return `Coin<Quote>`).
     input
 }

@@ -55,6 +55,10 @@ public struct Revoked has copy, drop {
 const ENotOwner: u64 = 0;
 const EBadDigestLen: u64 = 1;
 
+// Self-transfer is intentional: the attestation is owned by the registrant so
+// revocation (`revoke`) is gated by ownership. The composability lint doesn't
+// apply to this deliberate self-custody model.
+#[allow(lint(self_transfer))]
 public fun register(
     scheme: u8,
     public_key: vector<u8>,

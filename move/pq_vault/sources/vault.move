@@ -18,6 +18,7 @@
 module pq_vault::vault;
 
 use std::hash;
+use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin};
 use sui::event;
 use sui::sui::SUI;
@@ -29,8 +30,8 @@ public struct Vault has key {
     owner: address,
     /// The SUI balance currently held inside the vault.
     balance: u64,
-    /// Pool of coins; merged on each deposit.
-    pool: Coin<SUI>,
+    /// Pooled SUI balance; merged on each deposit.
+    pool: Balance<SUI>,
 }
 
 public struct Deposited has copy, drop { vault: ID, amount: u64 }
@@ -49,7 +50,7 @@ public fun open(seed: Coin<SUI>, ctx: &mut TxContext) {
         id: object::new(ctx),
         owner: ctx.sender(),
         balance: amount,
-        pool: seed,
+        pool: coin::into_balance(seed),
     };
     let vid = object::id(&v);
     event::emit(Deposited { vault: vid, amount });
@@ -58,7 +59,7 @@ public fun open(seed: Coin<SUI>, ctx: &mut TxContext) {
 
 public fun deposit(vault: &mut Vault, top_up: Coin<SUI>) {
     let amount = coin::value(&top_up);
-    coin::join(&mut vault.pool, top_up);
+    balance::join(&mut vault.pool, coin::into_balance(top_up));
     vault.balance = vault.balance + amount;
     event::emit(Deposited { vault: object::id(vault), amount });
 }
@@ -69,7 +70,7 @@ public fun deposit(vault: &mut Vault, top_up: Coin<SUI>) {
 /// withdrawal. Stable across implementations:
 ///   sha256(b"PQ_VAULT:WITHDRAW:v1" || vault_id (32) || to (32) || amount (8 BE))
 public fun withdraw_action_digest(vault: &Vault, to: address, amount: u64): vector<u8> {
-    let mut buf = vector::empty<u8>();
+    let mut buf = vector<u8>[];
     append(&mut buf, &b"PQ_VAULT:WITHDRAW:v1");
     append(&mut buf, &object::id(vault).to_bytes());
     append(&mut buf, &sui::address::to_bytes(to));
@@ -106,7 +107,7 @@ public fun withdraw(
     guard::consume(auth); // single-use witness
 
     event::emit(Withdrew { vault: object::id(vault), to, amount, pq_nonce });
-    coin::split(&mut vault.pool, amount, ctx)
+    coin::from_balance(balance::split(&mut vault.pool, amount), ctx)
 }
 
 // ── views ─────────────────────────────────────────────────────────────────
@@ -120,7 +121,7 @@ fun append(dst: &mut vector<u8>, src: &vector<u8>) {
 }
 
 fun u64_be(v: u64): vector<u8> {
-    let mut out = vector::empty<u8>();
+    let mut out = vector<u8>[];
     let mut i: u64 = 0;
     while (i < 8) {
         let shift = (7 - i) * 8;

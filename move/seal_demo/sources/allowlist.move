@@ -25,7 +25,7 @@ public fun create(ctx: &mut TxContext) {
     let al = Allowlist {
         id: object::new(ctx),
         owner: ctx.sender(),
-        members: vector::empty(),
+        members: vector[],
     };
     transfer::share_object(al);
 }

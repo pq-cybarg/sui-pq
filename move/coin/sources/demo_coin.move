@@ -13,6 +13,10 @@ const ICON_URL: vector<u8> = b"https://example.com/demo-coin.png";
 
 public struct DEMO_COIN has drop {}
 
+// `coin::create_currency` is the established TreasuryCap pattern. The framework
+// now also offers `coin_registry::new_currency_with_otw`; this reference coin
+// intentionally keeps the simpler create_currency flow.
+#[allow(deprecated_usage)]
 fun init(witness: DEMO_COIN, ctx: &mut TxContext) {
     let (treasury, metadata) = coin::create_currency(
         witness,
