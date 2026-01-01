@@ -1,0 +1,9 @@
+title: sui-pq
+description: >-
+  A Sui-ecosystem monorepo whose centrepiece is a FIPS-205 SLH-DSA-SHA2-128s
+  post-quantum signature verifier — implemented in Move, with a Lean 4
+  machine-checked formal specification and opcode-for-opcode bytecode-equivalence
+  proofs.
+theme: jekyll-theme-cayman
+# GitHub Pages enables jekyll-relative-links by default, so the ./*.md links in
+# these docs resolve to their generated .html pages on the published site.
