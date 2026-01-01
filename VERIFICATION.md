@@ -90,8 +90,11 @@ These gaps require eye-on-source review rather than machine verification:
    casts). The opcode semantics are transcribed from the Move binary-format
    reference; the `*Real.lean` modules pin the *programs* to the actual
    compiled bytecode, but the *interpreter* is trusted against the spec, not
-   against Sui's Rust VM. Closing this fully is the validator-side work in
-   `docs/pq-validator-roadmap.md`.
+   against Sui's Rust VM. This trusted edge — every opcode's semantics, each
+   simplification vs. the production VM, why each is sound on the reachable
+   state space, and the precise open refinement obligation — is documented in
+   [`proofs/Move/SEMANTICS.md`](./proofs/Move/SEMANTICS.md). Closing it fully
+   is the validator-side work in `docs/pq-validator-roadmap.md`.
 
 ## The audit chain in pictures
 
