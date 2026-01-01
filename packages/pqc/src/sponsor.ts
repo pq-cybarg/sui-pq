@@ -1,3 +1,5 @@
+import type { SuiClient } from '@mysten/sui/client';
+import type { Signer } from '@mysten/sui/cryptography';
 /**
  * PQ-sponsored gas flow.
  *
@@ -20,8 +22,6 @@
  * as atomic. From the chain's perspective: it sees a normal sponsored tx.
  */
 import { Transaction, type TransactionArgument } from '@mysten/sui/transactions';
-import type { SuiClient } from '@mysten/sui/client';
-import type { Signer } from '@mysten/sui/cryptography';
 import { addPqGuardUnlock } from './pq-guard.js';
 
 export interface SponsoredOpRequest {
@@ -42,7 +42,9 @@ export interface SponsoredOpRequest {
    */
   gatedCall: {
     target: `${string}::${string}::${string}`;
-    arguments: Array<{ kind: 'object'; id: string } | { kind: 'pure'; type: string; value: unknown }>;
+    arguments: Array<
+      { kind: 'object'; id: string } | { kind: 'pure'; type: string; value: unknown }
+    >;
     witnessArgIndex: number;
     typeArguments?: string[];
   };

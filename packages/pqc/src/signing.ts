@@ -16,12 +16,12 @@
  */
 import { ml_dsa44, ml_dsa65, ml_dsa87 } from '@noble/post-quantum/ml-dsa.js';
 import {
-  slh_dsa_sha2_128s,
   slh_dsa_sha2_128f,
-  slh_dsa_sha2_192s,
+  slh_dsa_sha2_128s,
   slh_dsa_sha2_192f,
-  slh_dsa_sha2_256s,
+  slh_dsa_sha2_192s,
   slh_dsa_sha2_256f,
+  slh_dsa_sha2_256s,
 } from '@noble/post-quantum/slh-dsa.js';
 import { SCHEME, SCHEME_META, type SchemeName } from './schemes.js';
 

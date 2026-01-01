@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import * as slh from './slh-dsa-ref.js';
 import {
   SLH_DSA_LITE_FLAG,
   intentDigest,
@@ -7,6 +6,7 @@ import {
   slhDsaAddress,
   verifyTxSlhDsaSig,
 } from './local-validator.js';
+import * as slh from './slh-dsa-ref.js';
 
 const SEED = new Uint8Array(32).fill(0xcc);
 const SK_SEED = new Uint8Array(32).fill(0xdd);

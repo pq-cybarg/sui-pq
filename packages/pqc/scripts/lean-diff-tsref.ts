@@ -1,3 +1,7 @@
+import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 /**
  * Three-way differential equivalence check: noble ↔ Lean spec ↔ our TS reference.
  *
@@ -16,10 +20,6 @@
  */
 import { slh_dsa_sha2_128s } from '@noble/post-quantum/slh-dsa.js';
 import { verify as tsRefVerify } from '../src/slh-dsa-128s-ref.js';
-import { randomBytes } from 'node:crypto';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 
 const N = Number.parseInt(process.argv[2] ?? '100', 10);
 if (!Number.isFinite(N) || N <= 0) {
@@ -91,7 +91,7 @@ const done = new Promise<void>((res, rej) => {
 
 for (const c of cases) {
   child.stdin.write(
-    JSON.stringify({ pk: hex(c.pk), msg: hex(c.msg), sig: hex(c.sig), ctx: hex(c.ctx) }) + '\n',
+    `${JSON.stringify({ pk: hex(c.pk), msg: hex(c.msg), sig: hex(c.sig), ctx: hex(c.ctx) })}\n`,
   );
 }
 child.stdin.end();
@@ -100,12 +100,14 @@ await done;
 let nobleVsLean = 0;
 let tsVsLean = 0;
 let tsVsNoble = 0;
-let acc = 0, rej = 0;
+let acc = 0;
+let rej = 0;
 
 for (let i = 0; i < N; i++) {
   const lean = lines[i] === 'accept';
   const c = cases[i]!;
-  if (lean) acc++; else rej++;
+  if (lean) acc++;
+  else rej++;
   if (lean !== c.noble) {
     nobleVsLean++;
     process.stderr.write(`[diff3] case ${i}: noble=${c.noble}, Lean=${lean} (mismatch)\n`);
@@ -127,4 +129,6 @@ process.stderr.write(
     `[diff3]   noble↔tsRef mismatches: ${tsVsNoble}\n`,
 );
 if (nobleVsLean + tsVsLean + tsVsNoble > 0) process.exit(1);
-process.stderr.write(`[diff3] ✓ all three impls (Lean, noble, TS reference) agree on all ${N} cases\n`);
+process.stderr.write(
+  `[diff3] ✓ all three impls (Lean, noble, TS reference) agree on all ${N} cases\n`,
+);

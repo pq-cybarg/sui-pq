@@ -17,7 +17,7 @@
  * The PTB is signed by a (cheap, throwaway) classical key just to satisfy
  * the validator; the actual authority is the SLH-DSA proof inside the tx.
  */
-import { Transaction, type TransactionArgument } from '@mysten/sui/transactions';
+import type { Transaction, TransactionArgument } from '@mysten/sui/transactions';
 
 const TAG = new TextEncoder().encode('PQ_GUARD:UNLOCK:v1');
 
@@ -37,9 +37,12 @@ export function buildUnlockMessageBytes(opts: {
   const total = TAG.length + senderBytes.length + nonceBytes.length + opts.actionDigest.length;
   const out = new Uint8Array(total);
   let off = 0;
-  out.set(TAG, off); off += TAG.length;
-  out.set(senderBytes, off); off += senderBytes.length;
-  out.set(nonceBytes, off); off += nonceBytes.length;
+  out.set(TAG, off);
+  off += TAG.length;
+  out.set(senderBytes, off);
+  off += senderBytes.length;
+  out.set(nonceBytes, off);
+  off += nonceBytes.length;
   out.set(opts.actionDigest, off);
   return out;
 }
@@ -74,9 +77,10 @@ export function addPqGuardUnlock(tx: Transaction, opts: AddUnlockOptions): Trans
 // ── helpers ──────────────────────────────────────────────────────────────────
 function u64BigEndian(v: bigint): Uint8Array {
   const out = new Uint8Array(8);
+  let n = v;
   for (let i = 7; i >= 0; i--) {
-    out[i] = Number(v & 0xffn);
-    v >>= 8n;
+    out[i] = Number(n & 0xffn);
+    n >>= 8n;
   }
   return out;
 }
@@ -87,6 +91,6 @@ function addressTo32Bytes(addr: string): Uint8Array {
   if (hex.length === 0 || hex.length > 64) throw new Error(`bad address: ${addr}`);
   const padded = hex.padStart(64, '0');
   const out = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) out[i] = parseInt(padded.slice(i * 2, i * 2 + 2), 16);
+  for (let i = 0; i < 32; i++) out[i] = Number.parseInt(padded.slice(i * 2, i * 2 + 2), 16);
   return out;
 }

@@ -1,3 +1,4 @@
+import { bcs } from '@mysten/sui/bcs';
 /**
  * PQ attestation: a (scheme, publicKey, signature, message_digest) tuple stored
  * on-chain in a Sui object owned by the user's classical address. Acts as a
@@ -10,7 +11,6 @@
  * so the signature can't be replayed against a different account or app context.
  */
 import { sha256 } from '@noble/hashes/sha256';
-import { bcs } from '@mysten/sui/bcs';
 import { SCHEME_META, type SchemeName } from './schemes.js';
 import { keygen, sign, verify } from './signing.js';
 
@@ -46,7 +46,10 @@ function asBytes(v: string | Uint8Array): Uint8Array {
 }
 
 /** Build (and PQ-sign) a fresh attestation. Returns the on-chain payload plus the secret key. */
-export function buildAttestation(opts: BuildOptions): { attestation: Attestation; secretKey: Uint8Array } {
+export function buildAttestation(opts: BuildOptions): {
+  attestation: Attestation;
+  secretKey: Uint8Array;
+} {
   const nonce = opts.nonce ?? crypto.getRandomValues(new Uint8Array(16));
   const appTag = asBytes(opts.appTag);
 
@@ -84,9 +87,15 @@ export function verifyAttestation(a: Attestation): VerifyResult {
   const meta = SCHEME_META[a.scheme];
   if (!meta) return { ok: false, reason: `unknown scheme ${a.scheme}` };
   if (a.publicKey.length !== meta.publicKeyBytes)
-    return { ok: false, reason: `publicKey length ${a.publicKey.length} != ${meta.publicKeyBytes}` };
+    return {
+      ok: false,
+      reason: `publicKey length ${a.publicKey.length} != ${meta.publicKeyBytes}`,
+    };
   if (a.signature.length !== meta.signatureBytes)
-    return { ok: false, reason: `signature length ${a.signature.length} != ${meta.signatureBytes}` };
+    return {
+      ok: false,
+      reason: `signature length ${a.signature.length} != ${meta.signatureBytes}`,
+    };
 
   const expected = sha256(
     CommitMessage.serialize({

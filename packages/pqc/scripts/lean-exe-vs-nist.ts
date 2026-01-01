@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 /**
  * Extraction fidelity check: run NIST ACVP test vectors through the compiled
  * Lean executable (lake exe kat) and confirm its accept/reject matches NIST's
@@ -16,9 +17,8 @@
  * "Verified extraction" section for the honest assessment.
  */
 import { readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const katExe = resolve(__dirname, '../../../proofs/.lake/build/bin/kat');
@@ -73,7 +73,12 @@ for (const t of pg.tests) {
   if (exp === undefined) continue;
   const ctxHex = t.context ?? '';
   child.stdin.write(
-    JSON.stringify({ pk: t.pk.toLowerCase(), msg: t.message.toLowerCase(), sig: t.signature.toLowerCase(), ctx: ctxHex.toLowerCase() }) + '\n',
+    `${JSON.stringify({
+      pk: t.pk.toLowerCase(),
+      msg: t.message.toLowerCase(),
+      sig: t.signature.toLowerCase(),
+      ctx: ctxHex.toLowerCase(),
+    })}\n`,
   );
   sent.push({ tcId: t.tcId, expected: exp });
 }
@@ -102,4 +107,6 @@ process.stderr.write(
   `[ext-vs-nist] processed ${sent.length} NIST vectors; accepted=${pass}, rejected=${fail}, mismatches=${mismatches}\n`,
 );
 if (mismatches > 0) process.exit(1);
-process.stderr.write(`[ext-vs-nist] ✓ Lean-extracted binary agrees with NIST on all ${sent.length} vectors\n`);
+process.stderr.write(
+  `[ext-vs-nist] ✓ Lean-extracted binary agrees with NIST on all ${sent.length} vectors\n`,
+);

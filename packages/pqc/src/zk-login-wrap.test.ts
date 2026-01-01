@@ -1,13 +1,13 @@
+import { sha256 } from '@noble/hashes/sha256';
 import { describe, expect, it } from 'vitest';
+import { sign } from './signing.js';
 import {
+  type PqWrappedZkLoginTx,
   createZkLoginPqBinding,
   verifyPqWrappedZkLoginTx,
-  type PqWrappedZkLoginTx,
 } from './zk-login-wrap.js';
-import { sign } from './signing.js';
-import { sha256 } from '@noble/hashes/sha256';
 
-const ADDR = '0x' + 'ab'.repeat(32);
+const ADDR = `0x${'ab'.repeat(32)}`;
 
 describe('zkLogin PQ-wrap', () => {
   it('creates a binding with the requested address + scheme', () => {
@@ -47,7 +47,7 @@ describe('zkLogin PQ-wrap', () => {
       pqSignature,
       pqPublicKey: binding.pqPublicKey,
       scheme: binding.scheme,
-      zkLoginAddress: '0x' + 'cd'.repeat(32),
+      zkLoginAddress: `0x${'cd'.repeat(32)}`,
     };
     expect(verifyPqWrappedZkLoginTx(wrapped, binding).ok).toBe(false);
   });
@@ -59,7 +59,10 @@ describe('zkLogin PQ-wrap', () => {
     const wrapped: PqWrappedZkLoginTx = {
       txBytes,
       txDigest: sha256(txBytes),
-      pqSignature: sign({ scheme: intruder.binding.scheme, secretKey: intruder.secretKey }, sha256(txBytes)),
+      pqSignature: sign(
+        { scheme: intruder.binding.scheme, secretKey: intruder.secretKey },
+        sha256(txBytes),
+      ),
       pqPublicKey: intruder.binding.pqPublicKey,
       scheme: intruder.binding.scheme,
       zkLoginAddress: ADDR,

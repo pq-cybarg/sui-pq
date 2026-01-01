@@ -34,6 +34,8 @@ describe('ML-KEM', () => {
     const packet = kemEncrypt('ML_KEM_512', kp.publicKey, pt);
     const tampered = new Uint8Array(packet.aeadCipherText);
     tampered[0] = (tampered[0] ?? 0) ^ 0xff;
-    expect(() => kemDecrypt('ML_KEM_512', kp.secretKey, { ...packet, aeadCipherText: tampered })).toThrow();
+    expect(() =>
+      kemDecrypt('ML_KEM_512', kp.secretKey, { ...packet, aeadCipherText: tampered }),
+    ).toThrow();
   });
 });

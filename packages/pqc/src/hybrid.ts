@@ -1,3 +1,5 @@
+import type { SuiClient } from '@mysten/sui/client';
+import type { Signer } from '@mysten/sui/cryptography';
 /**
  * Hybrid signing — classical + post-quantum in one envelope.
  *
@@ -15,9 +17,7 @@
  * This file is the engine; `move/pq_attestation` is the on-chain home for
  * the result.
  */
-import { Transaction } from '@mysten/sui/transactions';
-import type { SuiClient } from '@mysten/sui/client';
-import type { Signer } from '@mysten/sui/cryptography';
+import type { Transaction } from '@mysten/sui/transactions';
 import { sha256 } from '@noble/hashes/sha256';
 import { sign, verify } from './signing.js';
 import type { Keypair, SchemeName } from './signing.js';
@@ -98,7 +98,9 @@ export async function hybridVerify(opts: HybridVerifyOptions): Promise<HybridVer
     classicalOk = true;
     if (opts.expectedSuiAddress && pub.toSuiAddress() !== opts.expectedSuiAddress) {
       classicalOk = false;
-      reasons.push(`classical sig is for ${pub.toSuiAddress()}, expected ${opts.expectedSuiAddress}`);
+      reasons.push(
+        `classical sig is for ${pub.toSuiAddress()}, expected ${opts.expectedSuiAddress}`,
+      );
     }
   } catch (e) {
     reasons.push(`classical sig invalid: ${String(e).slice(0, 200)}`);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keygen, sign, verify, packSignature, unpackSignature, SLH } from './slh-dsa-ref.js';
+import { SLH, keygen, packSignature, sign, unpackSignature, verify } from './slh-dsa-ref.js';
 
 describe('SLH-DSA-LITE', () => {
   const seed = new Uint8Array(SLH.n).fill(0x11);

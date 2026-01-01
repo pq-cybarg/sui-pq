@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 /**
  * Runtime fixture differential between the Lean spec verifier and the
  * bytecode-composition verifier.
@@ -22,9 +23,8 @@
  * spec verifier — a much broader coverage than the 17 native_decide proofs.
  */
 import { readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturePath = resolve(
@@ -67,9 +67,7 @@ async function runExe(exe: string, label: string): Promise<string[]> {
   });
   const t0 = Date.now();
   for (const c of cases) {
-    child.stdin.write(
-      `${JSON.stringify({ pk: c.pk, msg: c.msg, sig: c.sig, ctx: c.ctx })}\n`,
-    );
+    child.stdin.write(`${JSON.stringify({ pk: c.pk, msg: c.msg, sig: c.sig, ctx: c.ctx })}\n`);
   }
   child.stdin.end();
   await done;
@@ -84,11 +82,15 @@ const [specLines, bcLines] = await Promise.all([
 ]);
 
 if (specLines.length !== cases.length) {
-  process.stderr.write(`[diff-bc] expected ${cases.length} spec verdicts, got ${specLines.length}\n`);
+  process.stderr.write(
+    `[diff-bc] expected ${cases.length} spec verdicts, got ${specLines.length}\n`,
+  );
   process.exit(1);
 }
 if (bcLines.length !== cases.length) {
-  process.stderr.write(`[diff-bc] expected ${cases.length} bytecode verdicts, got ${bcLines.length}\n`);
+  process.stderr.write(
+    `[diff-bc] expected ${cases.length} bytecode verdicts, got ${bcLines.length}\n`,
+  );
   process.exit(1);
 }
 
@@ -102,12 +104,11 @@ for (let i = 0; i < cases.length; i++) {
   const spec = specLines[i] === 'accept';
   const bc = bcLines[i] === 'accept';
   const exp = cases[i]!.expected;
-  if (bc) acc++; else rej++;
+  if (bc) acc++;
+  else rej++;
   if (spec !== bc) {
     specBcDisagree++;
-    process.stderr.write(
-      `[diff-bc] case ${i}: spec=${spec}, bytecode=${bc} (mismatch)\n`,
-    );
+    process.stderr.write(`[diff-bc] case ${i}: spec=${spec}, bytecode=${bc} (mismatch)\n`);
   }
   if (bc !== exp) bcExpectedDisagree++;
   if (spec !== exp) specExpectedDisagree++;

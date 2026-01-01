@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     clearTimeout(timeout);
     const msg = String((e as Error)?.message ?? e);
     const hint = isLocal
-      ? "local faucet at " + faucetUrl + " isn't reachable. Start your local Sui validator:\n  $ sui start --with-faucet"
+      ? `local faucet at ${faucetUrl} isn't reachable. Start your local Sui validator:\n  $ sui start --with-faucet`
       : 'upstream faucet did not respond (rate-limit / network / CORS / DNS). Try the CLI instead:\n  $ sui client faucet';
     return Response.json({ error: msg, hint }, { status: 502 });
   }

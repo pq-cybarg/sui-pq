@@ -836,6 +836,7 @@ function EphemeralSigner() {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only status poll; refreshStatus is intentionally not a dep to avoid resetting the interval each render.
   useEffect(() => {
     void refreshStatus();
     const id = setInterval(refreshStatus, 4000);
@@ -889,9 +890,9 @@ function EphemeralSigner() {
       setBalance(`(rpc unreachable: ${String(e).slice(0, 60)})`);
     }
   }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on address/client change; refreshBalance is intentionally excluded (recreated each render → would loop).
   useEffect(() => {
     if (address) void refreshBalance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, client]);
 
   async function dripFaucet() {
@@ -1070,9 +1071,9 @@ function ConnectStrip() {
       setBal('?');
     }
   }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on addr/client change; refresh is intentionally excluded (recreated each render → would loop).
   useEffect(() => {
     void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addr, client]);
 
   async function drip() {
@@ -1257,11 +1258,16 @@ function RegisterAttestation({
         {pqAddress && (
           <div className="pq-row">
             <span className="label">PQ-derived address</span>
-            <span className="val addr" style={{ fontSize: '0.78rem' }}>{pqAddress}</span>
+            <span className="val addr" style={{ fontSize: '0.78rem' }}>
+              {pqAddress}
+            </span>
             <CopyBtn value={pqAddress} />
           </div>
         )}
-        <p className="result-line" style={{ marginTop: '0.25rem', fontSize: '0.78rem', opacity: 0.8 }}>
+        <p
+          className="result-line"
+          style={{ marginTop: '0.25rem', fontSize: '0.78rem', opacity: 0.8 }}
+        >
           The attestation binds two identities: the <strong>wallet address</strong> (which pays gas
           and is the sender field inside the signed commit) and the <strong>PQ public key</strong>
           (which signed the commit and would itself derive the address shown above if used as a

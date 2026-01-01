@@ -18,7 +18,10 @@ export type KemSchemeName = 'ML_KEM_512' | 'ML_KEM_768' | 'ML_KEM_1024';
 
 interface NobleKem {
   keygen(seed?: Uint8Array): { publicKey: Uint8Array; secretKey: Uint8Array };
-  encapsulate(publicKey: Uint8Array, randomness?: Uint8Array): {
+  encapsulate(
+    publicKey: Uint8Array,
+    randomness?: Uint8Array,
+  ): {
     cipherText: Uint8Array;
     sharedSecret: Uint8Array;
   };
@@ -54,7 +57,11 @@ export function encapsulate(scheme: KemSchemeName, publicKey: Uint8Array): Encap
 }
 
 /** Recipient side: recover the same 32-byte shared secret from the ciphertext. */
-export function decapsulate(scheme: KemSchemeName, cipherText: Uint8Array, secretKey: Uint8Array): Uint8Array {
+export function decapsulate(
+  scheme: KemSchemeName,
+  cipherText: Uint8Array,
+  secretKey: Uint8Array,
+): Uint8Array {
   return KEM[scheme].decapsulate(cipherText, secretKey);
 }
 

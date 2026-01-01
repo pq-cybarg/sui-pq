@@ -1,3 +1,7 @@
+import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 /**
  * Differential equivalence test: noble vs Lean spec on N random cases.
  *
@@ -21,10 +25,6 @@
  * input space.
  */
 import { slh_dsa_sha2_128s } from '@noble/post-quantum/slh-dsa.js';
-import { randomBytes } from 'node:crypto';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 
 const N = Number.parseInt(process.argv[2] ?? '100', 10);
 if (!Number.isFinite(N) || N <= 0) {
@@ -80,7 +80,7 @@ for (let i = 0; i < N; i++) cases.push(genCase(i));
 
 const child = spawn(katExe, [], { stdio: ['pipe', 'pipe', 'inherit'] });
 
-let leanLines: string[] = [];
+const leanLines: string[] = [];
 let leanBuf = '';
 child.stdout.on('data', (chunk: Buffer) => {
   leanBuf += chunk.toString('utf-8');
@@ -117,7 +117,8 @@ let rejectedCount = 0;
 for (let i = 0; i < N; i++) {
   const leanAccepts = leanLines[i] === 'accept';
   const nobleAccepts = cases[i]!.expectedAccept;
-  if (leanAccepts) acceptedCount++; else rejectedCount++;
+  if (leanAccepts) acceptedCount++;
+  else rejectedCount++;
   if (leanAccepts !== nobleAccepts) {
     mismatches++;
     process.stderr.write(

@@ -1,3 +1,4 @@
+import type { SuiClient } from '@mysten/sui/client';
 /**
  * PQ-wrapped zkLogin sessions.
  *
@@ -22,12 +23,11 @@
  * itself), via the same `pq_attestation::register` flow used elsewhere in
  * this workspace.
  */
-import { Transaction } from '@mysten/sui/transactions';
-import type { SuiClient } from '@mysten/sui/client';
+import type { Transaction } from '@mysten/sui/transactions';
 import { sha256 } from '@noble/hashes/sha256';
-import { buildAttestation, type Attestation } from './attestation.js';
-import { keygen, sign, verify, type Keypair } from './signing.js';
+import { type Attestation, buildAttestation } from './attestation.js';
 import type { SchemeName } from './schemes.js';
+import { type Keypair, keygen, sign, verify } from './signing.js';
 
 export interface ZkLoginPqBinding {
   /** The zkLogin-derived Sui address. */
@@ -54,9 +54,10 @@ export interface CreateZkLoginPqBindingOptions {
  * that links it to a zkLogin address. The Attestation is meant to be
  * registered on-chain via `pq_attestation::register`.
  */
-export function createZkLoginPqBinding(
-  opts: CreateZkLoginPqBindingOptions,
-): { binding: ZkLoginPqBinding; secretKey: Uint8Array } {
+export function createZkLoginPqBinding(opts: CreateZkLoginPqBindingOptions): {
+  binding: ZkLoginPqBinding;
+  secretKey: Uint8Array;
+} {
   const scheme = opts.scheme ?? 'ML_DSA_65';
   const kp = opts.keypair ?? keygen(scheme);
   const { attestation, secretKey } = buildAttestation({
@@ -176,12 +177,20 @@ export function verifyPqWrappedZkLoginTx(
   }
   const expectedDigest = sha256(wrapped.txBytes);
   const digestMatches = bytesEq(expectedDigest, wrapped.txDigest);
-  const pqSignatureOk = verify(wrapped.scheme, wrapped.pqPublicKey, expectedDigest, wrapped.pqSignature);
+  const pqSignatureOk = verify(
+    wrapped.scheme,
+    wrapped.pqPublicKey,
+    expectedDigest,
+    wrapped.pqSignature,
+  );
   return {
     ok: digestMatches && pqSignatureOk,
     pqSignatureOk,
     digestMatches,
-    reason: digestMatches && pqSignatureOk ? undefined : `digestMatches=${digestMatches}, pqSignatureOk=${pqSignatureOk}`,
+    reason:
+      digestMatches && pqSignatureOk
+        ? undefined
+        : `digestMatches=${digestMatches}, pqSignatureOk=${pqSignatureOk}`,
   };
 }
 

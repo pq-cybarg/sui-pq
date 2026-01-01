@@ -1,3 +1,5 @@
+import { Transaction } from '@mysten/sui/transactions';
+import { sha256 } from '@noble/hashes/sha256';
 /**
  * Cross-package integration tests. These don't mock anything — they exercise
  * the real `@sui-gen/pqc` surface end-to-end and pin the byte format
@@ -9,31 +11,38 @@
  * that as a unit-test regression instead of a chain-reject regression.
  */
 import { describe, expect, it } from 'vitest';
-import { sha256 } from '@noble/hashes/sha256';
 import {
-  // schemes / signing
-  keygen, sign, verify, SCHEME_META,
-  // ML-KEM
-  kemKeygen, kemEncrypt, kemDecrypt,
+  // sponsor
+  PqSponsoredClient,
+  SCHEME_META,
+  addPqGuardUnlock,
+  base64ToBytes,
   // attestation
-  buildAttestation, verifyAttestation, buildRegisterTx,
+  buildAttestation,
+  buildRegisterTx,
+  // pq-guard
+  buildUnlockMessageBytes,
+  createZkLoginPqBinding,
+  kemDecrypt,
+  kemEncrypt,
+  // ML-KEM
+  kemKeygen,
+  // schemes / signing
+  keygen,
   // hybrid / zk-login
   packHybrid,
-  createZkLoginPqBinding,
-  // pq-guard
-  buildUnlockMessageBytes, addPqGuardUnlock,
-  // sponsor
-  PqSponsoredClient, base64ToBytes,
+  sign,
   // SLH-DSA-LITE (Move-mirror) namespace
   slh,
+  verify,
+  verifyAttestation,
 } from './index.js';
-import { Transaction } from '@mysten/sui/transactions';
 
 // Same key material the Move pq_guard test vectors used (gen-pq-guard-vectors.ts):
 // seed and skSeed are both 32 bytes filled with 0xcc and 0xdd respectively.
 const SEED = new Uint8Array(32).fill(0xcc);
 const SK_SEED = new Uint8Array(32).fill(0xdd);
-const SENDER = '0x' + '0a'.repeat(32);
+const SENDER = `0x${'0a'.repeat(32)}`;
 
 describe('cross-package integration', () => {
   it('every top-level export resolves at runtime', () => {
@@ -81,18 +90,15 @@ describe('cross-package integration', () => {
   );
 
   // ── SLH-DSA: ditto, single small variant for speed ──────────────────────
-  it.each(['SLH_DSA_SHA2_128S'] as const)(
-    '%s sign/verify round-trips',
-    (scheme) => {
-      const kp = keygen(scheme);
-      const meta = SCHEME_META[scheme];
-      expect(kp.publicKey.length).toBe(meta.publicKeyBytes);
-      const msg = new TextEncoder().encode('hash-based PQ');
-      const sig = sign(kp, msg);
-      expect(sig.length).toBe(meta.signatureBytes);
-      expect(verify(scheme, kp.publicKey, msg, sig)).toBe(true);
-    },
-  );
+  it.each(['SLH_DSA_SHA2_128S'] as const)('%s sign/verify round-trips', (scheme) => {
+    const kp = keygen(scheme);
+    const meta = SCHEME_META[scheme];
+    expect(kp.publicKey.length).toBe(meta.publicKeyBytes);
+    const msg = new TextEncoder().encode('hash-based PQ');
+    const sig = sign(kp, msg);
+    expect(sig.length).toBe(meta.signatureBytes);
+    expect(verify(scheme, kp.publicKey, msg, sig)).toBe(true);
+  });
 
   // ── ML-KEM ↔ AEAD: encrypt-decrypt across the public/secret boundary ───
   it('ML-KEM-768 + AES-GCM round-trips payload across separate keypairs', () => {
@@ -114,7 +120,7 @@ describe('cross-package integration', () => {
     expect(verifyAttestation(attestation).ok).toBe(true);
 
     const tx = buildRegisterTx({
-      packageId: '0x' + '11'.repeat(32),
+      packageId: `0x${'11'.repeat(32)}`,
       attestation,
     });
     // Transaction is a class from @mysten/sui — check the type rather than
@@ -171,8 +177,8 @@ describe('cross-package integration', () => {
   it('addPqGuardUnlock inserts a moveCall and returns a usable argument', () => {
     const tx = new Transaction();
     const auth = addPqGuardUnlock(tx, {
-      guardPackageId: '0x' + '22'.repeat(32),
-      identityId: '0x' + '33'.repeat(32),
+      guardPackageId: `0x${'22'.repeat(32)}`,
+      identityId: `0x${'33'.repeat(32)}`,
       actionDigest: new Uint8Array(32),
       signature: new Uint8Array(5056),
     });

@@ -1,3 +1,5 @@
+import type { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
+import type { Transaction } from '@mysten/sui/transactions';
 /**
  * PQ-native transaction signing — no sponsor, no classical key anywhere.
  *
@@ -22,8 +24,6 @@
  * goes through with the PQ-derived address as both sender and gas payer.
  */
 import { blake2b } from '@noble/hashes/blake2b';
-import type { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
-import type { Transaction } from '@mysten/sui/transactions';
 import * as slh from './slh-dsa-ref.js';
 type SlhPublicKey = slh.PublicKey;
 type SlhSecretKey = slh.SecretKey;
@@ -84,7 +84,11 @@ export function intentDigest(txBytes: Uint8Array): Uint8Array {
  * Sign already-built transaction bytes with an SLH-DSA-LITE keypair and produce
  * the signature blob in the wire format the patched validator parses.
  */
-export function signTxWithSlhDsa(txBytes: Uint8Array, pk: SlhPublicKey, sk: SlhSecretKey): Uint8Array {
+export function signTxWithSlhDsa(
+  txBytes: Uint8Array,
+  pk: SlhPublicKey,
+  sk: SlhSecretKey,
+): Uint8Array {
   const digest = intentDigest(txBytes);
   const sig = slh.sign(sk, digest);
   const packed = slh.packSignature(sig);

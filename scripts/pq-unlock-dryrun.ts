@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process';
 /**
  * Dry-run a FIPS-205 PQ-Guard unlock against the deployed testnet pq_guard
  * package. Measures the actual gas cost without spending SUI.
@@ -12,7 +13,6 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { sha256 } from '@noble/hashes/sha256';
 import { slh_dsa_sha2_128s } from '@noble/post-quantum/slh-dsa.js';
-import { execSync } from 'node:child_process';
 
 const PKG = process.env.PQ_GUARD_PKG ?? '';
 const IDENTITY_ID = process.env.PQ_IDENTITY_ID ?? '';
@@ -31,7 +31,9 @@ function activeAddress(): string {
 
 async function main(): Promise<void> {
   const sender = activeAddress();
-  const network = (process.env.SUI_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet' | undefined) ?? 'testnet';
+  const network =
+    (process.env.SUI_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet' | undefined) ??
+    'testnet';
   const url =
     process.env.SUI_RPC_URL ??
     (network === 'localnet' ? 'http://127.0.0.1:9000' : getFullnodeUrl(network));
@@ -40,7 +42,9 @@ async function main(): Promise<void> {
   // Reuse the script's deterministic seed convention if PQ_SEED_HEX set — otherwise
   // fail loudly, since the identity is bound to a specific pk.
   if (!process.env.PQ_SEED_HEX || process.env.PQ_SEED_HEX.length !== 96) {
-    throw new Error('PQ_SEED_HEX must be set (96 hex chars) and match the seed used at register time');
+    throw new Error(
+      'PQ_SEED_HEX must be set (96 hex chars) and match the seed used at register time',
+    );
   }
   const seed = new Uint8Array(48);
   for (let i = 0; i < 48; i++) {
@@ -49,10 +53,11 @@ async function main(): Promise<void> {
   const kp = slh_dsa_sha2_128s.keygen(seed);
 
   const obj = await client.getObject({ id: IDENTITY_ID, options: { showContent: true } });
-  const fields = (obj.data?.content as { fields?: { nonce?: string; pk?: number[] } } | undefined)?.fields;
+  const fields = (obj.data?.content as { fields?: { nonce?: string; pk?: number[] } } | undefined)
+    ?.fields;
   const onchainPk = new Uint8Array(fields?.pk ?? []);
   if (onchainPk.length !== 32 || !onchainPk.every((b, i) => b === kp.publicKey[i])) {
-    throw new Error(`On-chain pk does not match the keypair from PQ_SEED_HEX`);
+    throw new Error('On-chain pk does not match the keypair from PQ_SEED_HEX');
   }
   const nonce = BigInt(fields?.nonce ?? '0');
 

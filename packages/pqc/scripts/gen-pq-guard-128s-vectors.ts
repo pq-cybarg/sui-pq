@@ -1,3 +1,4 @@
+import { sha256 } from '@noble/hashes/sha256';
 /**
  * Generate FIPS-205-flavored Move test vectors for `move/pq_guard`.
  *
@@ -9,7 +10,6 @@
  * produces and the TS reference verifies must also verify on-chain.
  */
 import { slh_dsa_sha2_128s } from '@noble/post-quantum/slh-dsa.js';
-import { sha256 } from '@noble/hashes/sha256';
 import { verify as tsVerify } from '../src/slh-dsa-128s-ref.js';
 
 const TAG = new TextEncoder().encode('PQ_GUARD:UNLOCK:v1');

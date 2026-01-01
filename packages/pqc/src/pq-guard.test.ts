@@ -4,7 +4,7 @@ import { buildUnlockMessageBytes } from './pq-guard.js';
 describe('PQ-Guard message construction', () => {
   it('packs tag || sender(32) || nonce(8 BE) || action_digest(32) — 86 bytes', () => {
     const m = buildUnlockMessageBytes({
-      sender: '0x' + '0a'.repeat(32),
+      sender: `0x${'0a'.repeat(32)}`,
       nonce: 0n,
       actionDigest: new Uint8Array(32).fill(0x55),
     });
@@ -21,7 +21,7 @@ describe('PQ-Guard message construction', () => {
 
   it('encodes nonce big-endian', () => {
     const m = buildUnlockMessageBytes({
-      sender: '0x' + '00'.repeat(32),
+      sender: `0x${'00'.repeat(32)}`,
       nonce: 0x0102030405060708n,
       actionDigest: new Uint8Array(32),
     });
@@ -41,7 +41,7 @@ describe('PQ-Guard message construction', () => {
   it('rejects an action_digest of wrong length', () => {
     expect(() =>
       buildUnlockMessageBytes({
-        sender: '0x' + 'aa'.repeat(32),
+        sender: `0x${'aa'.repeat(32)}`,
         nonce: 0n,
         actionDigest: new Uint8Array(16),
       }),

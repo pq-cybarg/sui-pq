@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildAdrs, msgToChains, wotsKeygen, wotsSign, wotsVerify, WOTS } from './wots-ref.js';
+import { WOTS, buildAdrs, msgToChains, wotsKeygen, wotsSign, wotsVerify } from './wots-ref.js';
 
 const master = new Uint8Array(32).fill(0xab);
 const seed = new Uint8Array(32).fill(0xcd);

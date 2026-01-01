@@ -95,15 +95,15 @@ for (const k of kats) {
 }
 
 // Size invariants — fast, no verifier run.
-out += `/-! ## Size invariants -/\n`;
+out += '/-! ## Size invariants -/\n';
 for (const k of kats) {
   out += `example : pk_${k.index}.size = 32 := by native_decide\n`;
   out += `example : sig_${k.index}.size = 7856 := by native_decide\n`;
 }
-out += `\n`;
+out += '\n';
 
 // Acceptance theorems — each invokes the full ~2099-call verifier.
-out += `/-! ## Acceptance: Lean spec ≡ noble on each KAT -/\n`;
+out += '/-! ## Acceptance: Lean spec ≡ noble on each KAT -/\n';
 for (const k of kats) {
   out += `theorem accepts_noble_kat_${k.index} : verify pk_${k.index} msg_${k.index} sig_${k.index} = true := by\n  native_decide\n\n`;
 }

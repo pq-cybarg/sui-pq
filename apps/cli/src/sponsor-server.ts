@@ -17,8 +17,8 @@
  *   - HTTPS + auth header to prevent random parties from spending your gas
  */
 import http from 'node:http';
-import { getClient, signerFromBech32, resolveNetwork } from '@sui-gen/sdk-core';
-import { base64ToBytes, sponsorPqOperation, type SponsoredOpRequest } from '@sui-gen/pqc';
+import { type SponsoredOpRequest, base64ToBytes, sponsorPqOperation } from '@sui-gen/pqc';
+import { getClient, resolveNetwork, signerFromBech32 } from '@sui-gen/sdk-core';
 
 interface ServeOptions {
   port: number;
@@ -29,7 +29,7 @@ export async function startSponsorServer(opts: ServeOptions): Promise<http.Serve
   const guardPackageId = process.env.PQ_GUARD_PKG;
   const sponsorKey = process.env.PQ_SPONSOR_KEY;
   if (!guardPackageId) throw new Error('PQ_GUARD_PKG env var is required');
-  if (!sponsorKey)     throw new Error('PQ_SPONSOR_KEY env var is required (suiprivkey1…)');
+  if (!sponsorKey) throw new Error('PQ_SPONSOR_KEY env var is required (suiprivkey1…)');
 
   const network = resolveNetwork();
   const client = getClient({ network });
@@ -76,7 +76,9 @@ export async function startSponsorServer(opts: ServeOptions): Promise<http.Serve
   if (opts.allowedTargets) {
     console.log(`[pq-sponsor]   target allowlist : ${[...opts.allowedTargets].join(', ')}`);
   } else {
-    console.log(`[pq-sponsor]   target allowlist : (none — accepting any target; production should set one)`);
+    console.log(
+      '[pq-sponsor]   target allowlist : (none — accepting any target; production should set one)',
+    );
   }
   return server;
 }

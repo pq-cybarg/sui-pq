@@ -24,7 +24,7 @@ export const WOTS = {
 } as const;
 
 const TYPE_WOTS_HASH = 0;
-const TYPE_WOTS_PK = 1;
+const _TYPE_WOTS_PK = 1;
 
 function writeU32BE(buf: Uint8Array, off: number, v: number): void {
   buf[off + 0] = (v >>> 24) & 0xff;
@@ -93,7 +93,14 @@ export function msgToChains(msg: Uint8Array): number[] {
 }
 
 /** Climb a single chain from `start` for `steps` applications of F. */
-function chainStep(seed: Uint8Array, baseAdrs: Uint8Array, chainIdx: number, start: number, steps: number, value: Uint8Array): Uint8Array {
+function chainStep(
+  seed: Uint8Array,
+  baseAdrs: Uint8Array,
+  chainIdx: number,
+  start: number,
+  steps: number,
+  value: Uint8Array,
+): Uint8Array {
   const adrs = baseAdrs.slice();
   writeU32BE(adrs, 16, TYPE_WOTS_HASH);
   writeU32BE(adrs, 24, chainIdx);

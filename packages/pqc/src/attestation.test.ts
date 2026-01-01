@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAttestation, verifyAttestation } from './attestation.js';
 import { SCHEME_META } from './schemes.js';
 
-const ADDR = '0x' + '11'.repeat(32);
+const ADDR = `0x${'11'.repeat(32)}`;
 
 describe('PQ attestations', () => {
   it('ML_DSA_44 round-trips', () => {

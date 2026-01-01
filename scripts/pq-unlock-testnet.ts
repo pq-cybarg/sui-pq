@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 /**
  * End-to-end FIPS-205 PQ-Guard unlock against the deployed testnet pq_guard
  * package.
@@ -21,17 +23,14 @@
  *                    so each run produces a genuinely new keypair).
  */
 import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
-import { Transaction } from '@mysten/sui/transactions';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Transaction } from '@mysten/sui/transactions';
 import { sha256 } from '@noble/hashes/sha256';
 import { slh_dsa_sha2_128s } from '@noble/post-quantum/slh-dsa.js';
-import { execSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
 
 const PKG =
-  process.env.PQ_GUARD_PKG ??
-  '0x444ba4085ecb14e7db320128266b0b29c1ca2f024beaf49dbd8413bb0da17142';
+  process.env.PQ_GUARD_PKG ?? '0x444ba4085ecb14e7db320128266b0b29c1ca2f024beaf49dbd8413bb0da17142';
 const SCHEME_BYTE = 0x20; // FIPS-205 SLH-DSA-SHA2-128s (workspace registry)
 
 function suiCliSigner(): Ed25519Keypair {
@@ -45,7 +44,9 @@ function suiCliSigner(): Ed25519Keypair {
 }
 
 function hex(b: Uint8Array): string {
-  return Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
+  return Array.from(b)
+    .map((x) => x.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 async function main(): Promise<void> {
@@ -73,7 +74,9 @@ async function main(): Promise<void> {
   const sender = wallet.toSuiAddress();
   console.log(`[pq-unlock] sender (classical, pays gas) = ${sender}`);
 
-  const network = (process.env.SUI_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet' | undefined) ?? 'testnet';
+  const network =
+    (process.env.SUI_NETWORK as 'testnet' | 'mainnet' | 'devnet' | 'localnet' | undefined) ??
+    'testnet';
   const url =
     process.env.SUI_RPC_URL ??
     (network === 'localnet' ? 'http://127.0.0.1:9000' : getFullnodeUrl(network));
@@ -87,10 +90,7 @@ async function main(): Promise<void> {
     const tx = new Transaction();
     tx.moveCall({
       target: `${PKG}::pq_guard::register`,
-      arguments: [
-        tx.pure.u8(SCHEME_BYTE),
-        tx.pure.vector('u8', Array.from(kp.publicKey)),
-      ],
+      arguments: [tx.pure.u8(SCHEME_BYTE), tx.pure.vector('u8', Array.from(kp.publicKey))],
     });
     const res = await client.signAndExecuteTransaction({
       transaction: tx,

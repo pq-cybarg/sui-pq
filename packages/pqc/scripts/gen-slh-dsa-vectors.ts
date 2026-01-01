@@ -2,10 +2,12 @@
  * Generate Move test vectors for `move/slh_dsa`.
  *   tsx packages/pqc/scripts/gen-slh-dsa-vectors.ts > move/slh_dsa/tests/test_vectors.move
  */
-import { keygen, sign, packSignature, verify, SLH } from '../src/slh-dsa-ref.js';
+import { SLH, keygen, packSignature, sign, verify } from '../src/slh-dsa-ref.js';
 
 function hex(bytes: Uint8Array): string {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 const seed = new Uint8Array(SLH.n).fill(0xaa);

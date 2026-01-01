@@ -7,10 +7,12 @@
  * `move/wots/tests/`. Keeps the Move tests independently runnable and
  * removes any need for the toolchain to load JSON from outside the package.
  */
-import { buildAdrs, wotsKeygen, wotsSign, wotsVerify, WOTS } from '../src/wots-ref.js';
+import { WOTS, buildAdrs, wotsKeygen, wotsSign, wotsVerify } from '../src/wots-ref.js';
 
 function hex(bytes: Uint8Array): string {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function chunked(hexStr: string): string {
@@ -19,12 +21,12 @@ function chunked(hexStr: string): string {
 }
 
 const master = new Uint8Array(32).fill(0xa5);
-const seed   = new Uint8Array(32).fill(0x5a);
-const adrs   = buildAdrs({ keypair: 7 });
-const msg    = new Uint8Array(32);
+const seed = new Uint8Array(32).fill(0x5a);
+const adrs = buildAdrs({ keypair: 7 });
+const msg = new Uint8Array(32);
 for (let i = 0; i < 32; i++) msg[i] = ((i * 19) ^ 0x42) & 0xff;
 
-const kp  = wotsKeygen(master, seed, adrs);
+const kp = wotsKeygen(master, seed, adrs);
 const sig = wotsSign(kp, msg);
 
 // Sanity check the vector before printing.

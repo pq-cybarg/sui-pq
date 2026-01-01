@@ -24,7 +24,7 @@
  *   total                                          = 5056 bytes
  */
 import { sha256 } from '@noble/hashes/sha256';
-import { buildAdrs, msgToChains, WOTS } from './wots-ref.js';
+import { WOTS, buildAdrs, msgToChains } from './wots-ref.js';
 
 export const SLH = {
   n: 32,
@@ -75,7 +75,14 @@ function T_len(seed: Uint8Array, adrs: Uint8Array, m: Uint8Array): Uint8Array {
 }
 
 // ── WOTS+ chain helpers (n=32) ─────────────────────────────────────────────
-function chainStep(seed: Uint8Array, baseAdrs: Uint8Array, chainIdx: number, start: number, steps: number, value: Uint8Array): Uint8Array {
+function chainStep(
+  seed: Uint8Array,
+  baseAdrs: Uint8Array,
+  chainIdx: number,
+  start: number,
+  steps: number,
+  value: Uint8Array,
+): Uint8Array {
   const adrs = baseAdrs.slice();
   writeU32BE(adrs, 16, TYPE_WOTS_HASH);
   writeU32BE(adrs, 24, chainIdx);
@@ -95,7 +102,12 @@ function wotsSk(skSeed: Uint8Array, keyPair: number, chain: number): Uint8Array 
   return sha256(concat(skSeed, tag, counter));
 }
 
-function wotsPk(seed: Uint8Array, skSeed: Uint8Array, keyPair: number, baseAdrs: Uint8Array): Uint8Array {
+function wotsPk(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  keyPair: number,
+  baseAdrs: Uint8Array,
+): Uint8Array {
   const out = new Uint8Array(SLH.len * SLH.n);
   for (let i = 0; i < SLH.len; i++) {
     const sk = wotsSk(skSeed, keyPair, i);
@@ -105,7 +117,13 @@ function wotsPk(seed: Uint8Array, skSeed: Uint8Array, keyPair: number, baseAdrs:
   return out;
 }
 
-function wotsSign(seed: Uint8Array, skSeed: Uint8Array, keyPair: number, baseAdrs: Uint8Array, msgDigest: Uint8Array): Uint8Array {
+function wotsSign(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  keyPair: number,
+  baseAdrs: Uint8Array,
+  msgDigest: Uint8Array,
+): Uint8Array {
   const chains = msgToChains(msgDigest);
   const out = new Uint8Array(SLH.len * SLH.n);
   for (let i = 0; i < SLH.len; i++) {
@@ -116,7 +134,12 @@ function wotsSign(seed: Uint8Array, skSeed: Uint8Array, keyPair: number, baseAdr
   return out;
 }
 
-function wotsPkFromSig(seed: Uint8Array, baseAdrs: Uint8Array, msgDigest: Uint8Array, sig: Uint8Array): Uint8Array {
+function wotsPkFromSig(
+  seed: Uint8Array,
+  baseAdrs: Uint8Array,
+  msgDigest: Uint8Array,
+  sig: Uint8Array,
+): Uint8Array {
   const chains = msgToChains(msgDigest);
   const out = new Uint8Array(SLH.len * SLH.n);
   for (let i = 0; i < SLH.len; i++) {
@@ -145,18 +168,22 @@ function xmssRootFromLeafChunk(
   const adrs = initialAdrs.slice();
   writeU32BE(adrs, 16, TYPE_TREE);
   for (let i = 0; i < SLH.h_prime; i++) {
-    writeU32BE(adrs, 20, i + 1);        // tree_height (offset 20 in our ADRS layout)
+    writeU32BE(adrs, 20, i + 1); // tree_height (offset 20 in our ADRS layout)
     writeU32BE(adrs, 24, leafIdx >> (i + 1));
     const sibling = authPath.slice(i * SLH.n, (i + 1) * SLH.n);
-    const merged = ((leafIdx >> i) & 1) === 0
-      ? concat(node, sibling)
-      : concat(sibling, node);
+    const merged = ((leafIdx >> i) & 1) === 0 ? concat(node, sibling) : concat(sibling, node);
     node = H(seed, adrs, merged);
   }
   return node;
 }
 
-function xmssLeafFromKeypair(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeIdx: number, keyPair: number): Uint8Array {
+function xmssLeafFromKeypair(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  layer: number,
+  treeIdx: number,
+  keyPair: number,
+): Uint8Array {
   // ADRS for the WOTS+ chains at this keypair index
   const baseAdrs = buildAdrs({ layer, tree: BigInt(treeIdx), keypair: keyPair });
   const wpk = wotsPk(seed, skSeed, keyPair, baseAdrs);
@@ -165,7 +192,12 @@ function xmssLeafFromKeypair(seed: Uint8Array, skSeed: Uint8Array, layer: number
   return T_len(seed, tAdrs, wpk);
 }
 
-function xmssRoot(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeIdx: number): Uint8Array {
+function xmssRoot(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  layer: number,
+  treeIdx: number,
+): Uint8Array {
   // Compute all 2^h_prime leaves, then collapse via Merkle tree.
   const nLeaves = 1 << SLH.h_prime;
   let nodes: Uint8Array[] = [];
@@ -185,7 +217,13 @@ function xmssRoot(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeIdx: 
   return nodes[0]!;
 }
 
-function xmssAuthPath(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeIdx: number, leafIdx: number): Uint8Array {
+function xmssAuthPath(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  layer: number,
+  treeIdx: number,
+  leafIdx: number,
+): Uint8Array {
   // Compute every leaf, collapse, capture siblings of the path from leafIdx → root.
   const nLeaves = 1 << SLH.h_prime;
   let nodes: Uint8Array[] = [];
@@ -211,18 +249,32 @@ function xmssAuthPath(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeI
 }
 
 interface XmssSig {
-  wotsSig: Uint8Array;      // len * n
-  authPath: Uint8Array;     // h_prime * n
+  wotsSig: Uint8Array; // len * n
+  authPath: Uint8Array; // h_prime * n
 }
 
-function xmssSign(seed: Uint8Array, skSeed: Uint8Array, layer: number, treeIdx: number, leafIdx: number, msgDigest: Uint8Array): XmssSig {
+function xmssSign(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  layer: number,
+  treeIdx: number,
+  leafIdx: number,
+  msgDigest: Uint8Array,
+): XmssSig {
   const baseAdrs = buildAdrs({ layer, tree: BigInt(treeIdx), keypair: leafIdx });
   const wotsSig = wotsSign(seed, skSeed, leafIdx, baseAdrs, msgDigest);
   const authPath = xmssAuthPath(seed, skSeed, layer, treeIdx, leafIdx);
   return { wotsSig, authPath };
 }
 
-function xmssRootFromSig(seed: Uint8Array, layer: number, treeIdx: number, leafIdx: number, msgDigest: Uint8Array, sig: XmssSig): Uint8Array {
+function xmssRootFromSig(
+  seed: Uint8Array,
+  layer: number,
+  treeIdx: number,
+  leafIdx: number,
+  msgDigest: Uint8Array,
+  sig: XmssSig,
+): Uint8Array {
   const baseAdrs = buildAdrs({ layer, tree: BigInt(treeIdx), keypair: leafIdx });
   const wpk = wotsPkFromSig(seed, baseAdrs, msgDigest, sig.wotsSig);
   const tAdrs = buildAdrs({ layer, tree: BigInt(treeIdx), type: TYPE_WOTS_PK, keypair: leafIdx });
@@ -237,7 +289,13 @@ export interface HtSig {
   layers: XmssSig[];
 }
 
-function htSign(seed: Uint8Array, skSeed: Uint8Array, msgDigest: Uint8Array, treeIdx: bigint, leafIdx: number): HtSig {
+function htSign(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  msgDigest: Uint8Array,
+  treeIdx: bigint,
+  leafIdx: number,
+): HtSig {
   // Layer 0 signs msgDigest; each subsequent layer signs the previous XMSS root.
   const layers: XmssSig[] = [];
   let payload = msgDigest;
@@ -254,7 +312,13 @@ function htSign(seed: Uint8Array, skSeed: Uint8Array, msgDigest: Uint8Array, tre
   return { layers };
 }
 
-function htRootFromSig(seed: Uint8Array, msgDigest: Uint8Array, treeIdx: bigint, leafIdx: number, sig: HtSig): Uint8Array {
+function htRootFromSig(
+  seed: Uint8Array,
+  msgDigest: Uint8Array,
+  treeIdx: bigint,
+  leafIdx: number,
+  sig: HtSig,
+): Uint8Array {
   let payload = msgDigest;
   let curTree = treeIdx;
   let curLeaf = leafIdx;
@@ -285,7 +349,13 @@ function forsSk(skSeed: Uint8Array, treeIdx: bigint, treeNum: number, leafNum: n
   return sha256(concat(skSeed, tag, counter));
 }
 
-function forsLeavesAndAuth(seed: Uint8Array, skSeed: Uint8Array, treeIdx: bigint, treeNum: number, leafNum: number): { secret: Uint8Array; auth: Uint8Array } {
+function forsLeavesAndAuth(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  treeIdx: bigint,
+  treeNum: number,
+  leafNum: number,
+): { secret: Uint8Array; auth: Uint8Array } {
   // Build a full Merkle tree of 2^a leaves for tree #treeNum
   const nLeaves = 1 << SLH.a;
   const adrsF = buildAdrs({ tree: treeIdx, type: TYPE_FORS_TREE });
@@ -314,7 +384,12 @@ function forsLeavesAndAuth(seed: Uint8Array, skSeed: Uint8Array, treeIdx: bigint
   return { secret, auth };
 }
 
-function forsSign(seed: Uint8Array, skSeed: Uint8Array, treeIdx: bigint, indices: number[]): ForsSig {
+function forsSign(
+  seed: Uint8Array,
+  skSeed: Uint8Array,
+  treeIdx: bigint,
+  indices: number[],
+): ForsSig {
   const chunkSize = SLH.n + SLH.a * SLH.n;
   const out = new Uint8Array(SLH.k * chunkSize);
   for (let i = 0; i < SLH.k; i++) {
@@ -325,7 +400,12 @@ function forsSign(seed: Uint8Array, skSeed: Uint8Array, treeIdx: bigint, indices
   return { bytes: out };
 }
 
-function forsRootFromSig(seed: Uint8Array, treeIdx: bigint, indices: number[], sig: ForsSig): Uint8Array {
+function forsRootFromSig(
+  seed: Uint8Array,
+  treeIdx: bigint,
+  indices: number[],
+  sig: ForsSig,
+): Uint8Array {
   const chunkSize = SLH.n + SLH.a * SLH.n;
   const roots: Uint8Array[] = [];
   const adrsLeaf = buildAdrs({ tree: treeIdx, type: TYPE_FORS_TREE });
@@ -392,7 +472,8 @@ function splitDigest(digest: Uint8Array): { fors: number[]; treeIdx: bigint; lea
   // Remaining h bits for the hypertree address: h_prime → leafIdx, rest → treeIdx
   const offset = forsBytes;
   let path = 0n;
-  for (let i = 0; i < Math.ceil(SLH.h / 8); i++) path = (path << 8n) | BigInt(digest[offset + i] ?? 0);
+  for (let i = 0; i < Math.ceil(SLH.h / 8); i++)
+    path = (path << 8n) | BigInt(digest[offset + i] ?? 0);
   const leafMask = (1n << BigInt(SLH.h_prime)) - 1n;
   const treeBits = SLH.h - SLH.h_prime;
   // Take low `leafIdx_bits` for leafIdx, then `treeBits` for treeIdx

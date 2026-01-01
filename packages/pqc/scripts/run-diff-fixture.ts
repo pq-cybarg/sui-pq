@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 /**
  * CI-fast differential check: replay a pre-generated fixture through the Lean
  * `kat` executable and assert every case matches the embedded expected verdict.
@@ -11,9 +12,8 @@
  * seconds rather than the ~30 minutes the live differential takes.
  */
 import { readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturePath = resolve(
@@ -62,9 +62,7 @@ await done;
 const elapsed = ((Date.now() - startMs) / 1000).toFixed(2);
 
 if (lines.length !== cases.length) {
-  process.stderr.write(
-    `[fixture] expected ${cases.length} verdicts, got ${lines.length}\n`,
-  );
+  process.stderr.write(`[fixture] expected ${cases.length} verdicts, got ${lines.length}\n`);
   process.exit(1);
 }
 
@@ -86,6 +84,4 @@ process.stderr.write(
   `[fixture] processed ${cases.length} cases in ${elapsed}s; accepted=${accepted}, rejected=${rejected}, mismatches=${mismatches}\n`,
 );
 if (mismatches > 0) process.exit(1);
-process.stderr.write(
-  `[fixture] ✓ Lean spec agrees with fixture on all ${cases.length} cases\n`,
-);
+process.stderr.write(`[fixture] ✓ Lean spec agrees with fixture on all ${cases.length} cases\n`);

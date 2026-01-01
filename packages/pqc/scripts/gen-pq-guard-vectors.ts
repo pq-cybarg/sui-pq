@@ -1,21 +1,24 @@
+import { sha256 } from '@noble/hashes/sha256';
 /**
  * Generate Move test vectors for `move/pq_guard`.
  *   tsx packages/pqc/scripts/gen-pq-guard-vectors.ts > move/pq_guard/tests/test_vectors.move
  */
-import { keygen, sign, packSignature, unpackSignature, verify, SLH } from '../src/slh-dsa-ref.js';
-import { sha256 } from '@noble/hashes/sha256';
+import { SLH, keygen, packSignature, sign, unpackSignature, verify } from '../src/slh-dsa-ref.js';
 
 const TAG = new TextEncoder().encode('PQ_GUARD:UNLOCK:v1');
 
 function hex(bytes: Uint8Array): string {
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function u64be(v: bigint): Uint8Array {
   const out = new Uint8Array(8);
+  let n = v;
   for (let i = 7; i >= 0; i--) {
-    out[i] = Number(v & 0xffn);
-    v >>= 8n;
+    out[i] = Number(n & 0xffn);
+    n >>= 8n;
   }
   return out;
 }

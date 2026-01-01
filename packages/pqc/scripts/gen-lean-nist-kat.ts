@@ -54,7 +54,14 @@ function hexToBytes(hex: string): Uint8Array {
 }
 
 const skipped: number[] = [];
-const validated: { tc: number; ctx: string; pk: string; msg: string; sig: string; pass: boolean }[] = [];
+const validated: {
+  tc: number;
+  ctx: string;
+  pk: string;
+  msg: string;
+  sig: string;
+  pass: boolean;
+}[] = [];
 
 for (const t of pg.tests) {
   const expectedPass = expectedByTcId.get(t.tcId);
@@ -91,7 +98,9 @@ for (const t of pg.tests) {
 }
 
 if (skipped.length > 0) {
-  process.stderr.write(`[gen-lean-nist-kat] skipped ${skipped.length} tcIds with no expected result\n`);
+  process.stderr.write(
+    `[gen-lean-nist-kat] skipped ${skipped.length} tcIds with no expected result\n`,
+  );
 }
 
 let out = `import Fips205.Verify
@@ -125,8 +134,8 @@ for (const v of validated) {
   out += `def sig_${v.tc} : ByteArray := ${leanHex(v.sig)}\n\n`;
 }
 
-out += `/-! ## Acceptance / rejection theorems\n\n`;
-out += `These theorems pair each NIST test case with its official expected result.\n`;
+out += '/-! ## Acceptance / rejection theorems\n\n';
+out += 'These theorems pair each NIST test case with its official expected result.\n';
 out += `Lean's kernel evaluates the verifier and confirms the spec agrees with NIST.\n-/\n\n`;
 
 for (const v of validated) {
@@ -134,10 +143,10 @@ for (const v of validated) {
   out += `/-- NIST tcId=${v.tc}: official expected = ${v.pass ? 'PASS' : 'FAIL'} -/\n`;
   out += `theorem nist_${verb}_${v.tc} :\n`;
   out += `    verify pk_${v.tc} msg_${v.tc} sig_${v.tc} ctx_${v.tc} = ${v.pass} := by\n`;
-  out += `  native_decide\n\n`;
+  out += '  native_decide\n\n';
 }
 
-out += `end Fips205.NistKat\n`;
+out += 'end Fips205.NistKat\n';
 
 process.stdout.write(out);
 process.stderr.write(`[gen-lean-nist-kat] emitted ${validated.length} NIST test cases\n`);
