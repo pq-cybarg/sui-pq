@@ -36,9 +36,9 @@ const expectedPath = process.env.SLHDSA_EXPECTED ?? '/tmp/slhdsa-expected.json';
 // proof, not this cross-check, is the gate.
 if (!existsSync(promptPath) || !existsSync(expectedPath)) {
   console.warn(
-    `[nist-exe] skipping: ${promptPath} / ${expectedPath} not found.\n` +
-      '[nist-exe] (the NIST equivalence is machine-checked in Fips205/NistKat.lean;\n' +
-      '[nist-exe]  fetch the ACVP vectors and set SLHDSA_PROMPT/SLHDSA_EXPECTED to run this cross-check.)',
+    `[nist-exe] skipping: ${promptPath} / ${expectedPath} not found.
+[nist-exe] (the NIST equivalence is machine-checked in Fips205/NistKat.lean;
+[nist-exe]  fetch the ACVP vectors and set SLHDSA_PROMPT/SLHDSA_EXPECTED to run this cross-check.)`,
   );
   process.exit(0);
 }
