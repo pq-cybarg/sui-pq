@@ -1,0 +1,63 @@
+{
+  "name": "sui-gen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Comprehensive Sui ecosystem development workspace",
+  "packageManager": "pnpm@10.29.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "bootstrap": "bash scripts/setup.sh",
+    "setup:sui": "bash scripts/install-sui.sh",
+    "setup:walrus": "bash scripts/install-walrus.sh",
+    "build": "pnpm -r --filter './packages/**' --filter './apps/**' run build",
+    "test": "pnpm -r run test",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r run typecheck",
+    "clean": "pnpm -r run clean && rm -rf node_modules",
+    "cli": "pnpm --filter @sui-gen/cli run cli --",
+    "move:build": "bash scripts/move-all.sh build",
+    "move:test": "bash scripts/move-all.sh test",
+    "verify": "bash scripts/verify-fips205.sh",
+    "verify:lean": "cd proofs && lake build",
+    "verify:diff": "pnpm exec tsx packages/pqc/scripts/lean-diff-noble.ts 100",
+    "verify:nist": "pnpm exec tsx packages/pqc/scripts/lean-exe-vs-nist.ts",
+    "verify:fixture": "pnpm exec tsx packages/pqc/scripts/run-diff-fixture.ts",
+    "verify:fixture:gen": "pnpm exec tsx packages/pqc/scripts/gen-diff-fixture.ts 1000 > test-vectors/fips205-diff.jsonl",
+    "verify:tsref": "pnpm exec tsx packages/pqc/scripts/lean-diff-tsref.ts 30",
+    "faucet": "bash scripts/faucet.sh",
+
+    "web:start":      "bash scripts/server.sh web start",
+    "web:stop":       "bash scripts/server.sh web stop",
+    "web:restart":    "bash scripts/server.sh web restart",
+    "web:status":     "bash scripts/server.sh web status",
+    "web:open":       "bash scripts/server.sh web open",
+    "web:logs":       "bash scripts/server.sh web tail",
+
+    "tutorial:start":   "bash scripts/server.sh tutorial start",
+    "tutorial:stop":    "bash scripts/server.sh tutorial stop",
+    "tutorial:restart": "bash scripts/server.sh tutorial restart",
+    "tutorial:status":  "bash scripts/server.sh tutorial status",
+    "tutorial:open":    "bash scripts/server.sh tutorial open",
+    "tutorial:logs":    "bash scripts/server.sh tutorial tail",
+
+    "servers:start":  "bash scripts/server.sh all start",
+    "servers:stop":   "bash scripts/server.sh all stop",
+    "servers:status": "bash scripts/server.sh all status"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "pnpm": {
+    "overrides": {
+      "@mysten/sui": "1.45.2"
+    }
+  }
+}

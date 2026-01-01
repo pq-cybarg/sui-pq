@@ -1,0 +1,111 @@
+import { Pager } from '@/components/Pager';
+
+# 8. zkLogin
+
+zkLogin lets a user "sign in with Google" (or Apple / Facebook / Twitch / Slack /
+Kakao) and produce Sui transactions **without ever holding a private key**. The
+protocol binds an ephemeral keypair to the user's OAuth identity via a zero-knowledge
+proof over their JWT.
+
+## Why this is special
+
+Pre-zkLogin, dApps had two onboarding stories:
+
+1. **Browser wallet** — installs an extension, writes down a seed phrase, painful for normies.
+2. **Custodial** — login with email, dApp holds the key. Centralized; defeats the point.
+
+zkLogin is the third option: a non-custodial address derived from an OAuth identity.
+The user never sees a seed phrase; they sign in like any web2 app. The address is
+deterministic, derived from `(iss, sub, salt)`, so the same Google account always
+maps to the same Sui address.
+
+## Flow
+
+```
+1. Client: generate (ephemeralKeyPair, randomness, maxEpoch)
+2. Client: nonce = generateNonce(ephPubKey, maxEpoch, randomness)
+3. Client → OAuth provider: redirect with that nonce
+4. OAuth provider → Client: id_token (JWT) bound to nonce
+5. Client: salt = fetchSalt(jwt.sub, jwt.iss)
+6. Client: address = jwtToAddress(jwt, salt)
+7. Client → prover: { jwt, ephPubKey, maxEpoch, randomness, salt }
+8. Prover → Client: ZK proof
+9. Client: sign tx with ephemeralKey, attach proof as ZkLoginSignature
+```
+
+The proof is what convinces validators that the ephemeral key actually belongs
+to the OAuth identity, without revealing the JWT itself.
+
+## TypeScript surface
+
+```ts
+import {
+  beginZkLogin,
+  buildAuthorizeUrl,
+  fetchZkProof,
+  parseJwtClaims,
+} from '@sui-gen/zk-login';
+
+// Step 1-2: start a session
+const setup = beginZkLogin(currentEpoch, /* epochsAhead */ 2);
+
+// Persist enough state to survive the OAuth round-trip
+sessionStorage.setItem('zk', JSON.stringify({
+  randomness: setup.randomness,
+  maxEpoch: setup.maxEpoch,
+  // ephemeralKeyPair: serialize separately, secret bytes
+}));
+
+// Step 3: redirect to Google
+window.location.href = buildAuthorizeUrl(
+  {
+    name: 'google',
+    authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    clientId: 'YOUR_GOOGLE_CLIENT_ID',
+    redirectUri: `${window.location.origin}/zk-login/callback`,
+  },
+  setup.nonce,
+);
+
+// On the callback page: extract `id_token` from the URL fragment, then…
+const claims = parseJwtClaims(jwt);
+const salt = await fetchSalt(claims.sub, claims.iss);
+const address = jwtToAddress(jwt, salt);
+
+const proof = await fetchZkProof('https://prover-dev.mystenlabs.com/v1', {
+  jwt,
+  extendedEphemeralPublicKey: getExtendedEphemeralPublicKey(setup.ephemeralKeyPair.getPublicKey()),
+  maxEpoch: setup.maxEpoch,
+  jwtRandomness: setup.randomness,
+  salt,
+  keyClaimName: 'sub',
+});
+```
+
+After that, signing transactions looks normal — sign with the ephemeral key, then
+wrap the signature with `getZkLoginSignature({ inputs: proof, maxEpoch, userSignature })`
+before submitting.
+
+## Salt — the one piece you need to host
+
+Salt is per-user; the same salt for the same (iss, sub) must always be returned,
+otherwise the address changes. Two viable patterns:
+
+| Pattern | Where the salt lives | Tradeoff |
+| --- | --- | --- |
+| **Hosted salt service** (Mysten runs one at `salt.api.mystenlabs.com`) | Mysten's service | Easiest; you trust Mysten not to lose it |
+| **Your backend** | `HMAC(serverSecret, sub \|\| iss)` | You own it; losing the secret bricks every user |
+
+For dev, use the hosted one; for production, derive it yourself.
+
+## Production notes
+
+- Use **`https://prover.mystenlabs.com/v1`** on mainnet — the dev prover has rate limits.
+- `maxEpoch` is in Sui epochs (~24h on mainnet). Pick 2–10 epochs; the user must
+  re-prove after expiry.
+- ZK proofs are ~6 KB. Cache them in sessionStorage and reuse across multiple
+  txs until `maxEpoch` expires.
+- **Verify the JWT signature** against the OAuth provider's JWKs before computing
+  the address server-side. Never trust a client-supplied JWT.
+
+<Pager slug="zk-login" />

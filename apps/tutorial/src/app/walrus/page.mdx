@@ -1,0 +1,90 @@
+import { Pager } from '@/components/Pager';
+import { TryWalrus } from '@/components/TryWalrus';
+
+# 6. Walrus storage
+
+Walrus is Mysten Labs' decentralized blob-storage protocol. Files are erasure-coded
+into "slivers", stored across an open network of storage nodes, and their lifetime
++ state is tracked on Sui (so contracts can reference blobs by id). The native
+token is **WAL**, paid by whoever publishes.
+
+## Two access modes
+
+| Mode | Who pays | Use case |
+| --- | --- | --- |
+| **Public HTTP publisher** | Mysten-run publisher pays WAL on your behalf | Demos, prototypes, dev environments |
+| **`@mysten/walrus` client** | Your wallet's WAL | Production apps that own their storage |
+
+The workspace's `WalrusHttpClient` wraps the first; `createWalrusClient()` wraps
+the second. They share the same blob-id surface — code that *reads* a blob
+doesn't care which mode put it there.
+
+## Upload + read
+
+```ts
+import { WalrusHttpClient } from '@sui-gen/walrus-client';
+
+const walrus = new WalrusHttpClient();
+const { blobId } = await walrus.put('hello, walrus', { epochs: 5 });
+// → blobId: "JlT6Xtosxx9YefsoE1glyo0jGw3lb-3eu4IHum0DQEE"
+
+const text = await walrus.getText(blobId);
+// → "hello, walrus"
+```
+
+A blob lives for `epochs` storage epochs. Testnet epochs are ~1 day; mainnet
+~2 weeks. After expiry the blob is garbage-collected unless extended.
+
+## Reading in HTML
+
+Aggregators serve blobs over plain HTTP, so you can use a blob id wherever you'd
+use a URL:
+
+```tsx
+<img src={`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`} />
+```
+
+That's what makes Walrus-backed NFTs work — the on-chain `Display` field stores
+the aggregator URL, every wallet/explorer fetches the image directly.
+
+## Try it
+
+Upload some text, get back a blob id, then download it again. The publisher
+pays for storage so this works without any wallet setup.
+
+<TryWalrus />
+
+## Wallet-paid uploads (production pattern)
+
+When *your dApp* owns its storage cost (you don't want to be rate-limited and
+you control the data lifecycle), use `@mysten/walrus` directly:
+
+```ts
+import { createWalrusClient } from '@sui-gen/walrus-client';
+import { signerFromEnv } from '@sui-gen/sdk-core';
+
+const walrus = createWalrusClient({ network: 'testnet' });
+const signer = signerFromEnv();
+
+const { blobId, blobObject } = await walrus.writeBlob({
+  blob: new TextEncoder().encode('hello, walrus'),
+  deletable: false,
+  epochs: 5,
+  signer,
+});
+```
+
+`blobObject` is a Sui object you own; you can transfer it, attach it to your
+own contracts via `store`, or delete it later if you set `deletable: true`.
+
+## CLI
+
+For diagnostics:
+
+```bash
+walrus blob-status <blob-id>       # confirm storage + epochs
+walrus read <blob-id> -o out.bin   # download
+walrus store ./file.png            # upload (pays from your active sui keypair)
+```
+
+<Pager slug="walrus" />

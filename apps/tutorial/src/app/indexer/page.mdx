@@ -1,0 +1,102 @@
+import { Pager } from '@/components/Pager';
+import { TryEvents } from '@/components/TryEvents';
+
+# 13. Indexer
+
+Sui's RPC gives you two ways to follow on-chain state without polling every
+object you care about: **`queryEvents`** (events your contract emits) and
+**GraphQL subscriptions** (recent activity, formatted relationally).
+
+## Events — by far the easiest
+
+If your Move code calls `event::emit(SomeStruct { ... })`, the RPC indexer makes
+those queryable. The workspace's counter emits an `Incremented` event on every
+increment:
+
+```move
+public struct Incremented has copy, drop { counter: ID, value: u64, by: address }
+
+public fun increment(c: &mut Counter, ctx: &TxContext) {
+    c.value = c.value + 1;
+    event::emit(Incremented { counter: object::id(c), value: c.value, by: ctx.sender() });
+}
+```
+
+And on the client:
+
+```ts
+const page = await client.queryEvents({
+  query: { MoveEventType: `${PKG}::counter::Incremented` },
+  limit: 20,
+  order: 'descending',
+});
+
+for (const ev of page.data) {
+  const { value, by } = ev.parsedJson as { value: string; by: string };
+  console.log(`counter → ${value}, by ${by}`);
+}
+```
+
+## Try it: live increments
+
+This panel polls testnet every 8 seconds. If anyone (you included) hits the
+"+1" button on the Slush page or runs `pnpm cli` increment, it shows up here
+within a few seconds.
+
+<TryEvents />
+
+## Polling with cursors
+
+For a real-time-ish feed, save the `nextCursor` from each page and pass it on
+the next call. The workspace's `@sui-gen/indexer` package wraps this:
+
+```ts
+import { startPolling, InMemoryCursorStore } from '@sui-gen/indexer';
+
+const stop = startPolling(
+  {
+    filter: { MoveEventType: `${PKG}::counter::Incremented` },
+    cursorKey: 'counter-incremented',
+    store: new InMemoryCursorStore(),  // swap for Redis / Postgres in production
+    intervalMs: 2000,
+  },
+  async (event) => {
+    console.log('new event:', event.parsedJson);
+    // …append to your DB
+  },
+);
+
+// Later: stop()
+```
+
+The cursor pattern means restarts don't replay events you already processed —
+swap `InMemoryCursorStore` for something durable and your indexer is reliable.
+
+## GraphQL
+
+Sui also exposes a GraphQL endpoint that joins objects, transactions, addresses,
+and checkpoints — handy when you want a relational view rather than a stream of
+events.
+
+```ts
+import { gqlQuery } from '@sui-gen/indexer';
+
+const data = await gqlQuery<{ events: { nodes: unknown[] } }>(
+  `query Recent($filter: EventFilter!) {
+     events(filter: $filter, first: 5) { nodes { sendingModule { name } contents { type json } } }
+   }`,
+  { filter: { eventType: `${PKG}::counter::Incremented` } },
+);
+```
+
+For most apps `queryEvents` is enough; GraphQL pays off when you're building
+explorer-style UIs that join across multiple object types.
+
+## Run your own checkpoint reader
+
+The truly high-throughput pattern (millions of events/sec) is to read **Sui
+checkpoints** directly. The Mysten `sui-data-ingestion` framework + the
+`sui-indexer` crate let you process checkpoint files as they're produced.
+Overkill for most apps; mandatory for analytics platforms.
+
+<Pager slug="indexer" />

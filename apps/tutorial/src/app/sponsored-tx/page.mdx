@@ -1,0 +1,89 @@
+import { Pager } from '@/components/Pager';
+
+# 10. Sponsored transactions
+
+A sponsored transaction has two signers: the **sender** (the user authorizing the
+action) and the **gas owner / sponsor** (someone else paying for the gas).
+
+This is the foundation of most "gasless" UX in Sui: your backend bankrolls user
+actions inside scoped allowlists, so a new user can mint, transfer, or play
+without holding SUI.
+
+## Two patterns
+
+### Pattern A — Backend gas station
+
+```
+┌───────┐  unsigned tx  ┌──────────────┐  signed tx + 2 sigs   ┌───────────┐
+│Wallet │ ────────────► │Your backend  │ ────────────────────► │ Sui RPC   │
+│       │ ◄──────────── │(signs as gas │                       └───────────┘
+│       │   user sig    │ owner)       │
+└───────┘               └──────────────┘
+```
+
+1. Wallet builds a tx with `tx.setSender(user)` and `tx.setGasOwner(sponsor)`.
+2. Wallet serializes the tx-bytes, signs as `sender`, sends both to your backend.
+3. Backend re-signs the same tx-bytes as `gasOwner`, submits both signatures.
+
+```ts
+import { sponsorAndExecute } from '@sui-gen/sponsored-tx';
+import { signerFromEnv, getClient } from '@sui-gen/sdk-core';
+
+// On the wallet side
+tx.setSender(userAddr);
+tx.setGasOwner(sponsorAddr);
+const txBytes = await tx.build({ client });
+const userSig = (await signer.signTransaction(txBytes)).signature;
+// POST { txBytes: toB64(bytes), userSignature: userSig } to /sponsor
+
+// On the backend
+const sponsor = signerFromEnv('SPONSOR_PRIVATE_KEY');
+const res = await sponsorAndExecute(getClient(), sponsor, txBytes, userSignature);
+```
+
+### Pattern B — Hosted gas station
+
+Services like **Shinami** and **Enoki** (Mysten Labs) expose a REST API:
+
+```ts
+const { txBytes, sponsorSignature } = await fetch('https://enoki.mystenlabs.com/v1/sponsor', {
+  method: 'POST',
+  headers: { 'X-API-KEY': process.env.ENOKI_API_KEY! },
+  body: JSON.stringify({ network: 'testnet', sender, transactionKindBytes }),
+}).then((r) => r.json());
+// Wallet then signs txBytes; submit with both signatures.
+```
+
+You write less infra; you pay per sponsored tx; the service handles gas-coin
+fragmentation so a busy app doesn't bottleneck on a single coin.
+
+## Safety — read this twice
+
+The sponsor signs *everything in the tx*. **Never blindly sign whatever the
+client sent.** Your backend must:
+
+1. **Deserialize the `TransactionData`.** The SDK exposes `bcs.TransactionData.parse(bytes)`.
+2. **Inspect every command.** Reject anything outside your allowlist: e.g. only
+   `MoveCall` whose `package == YOUR_PKG` and `module in {nft, counter}`.
+3. **Rate-limit per user.** Sponsor gas is your money. Track by zkLogin `sub` or
+   wallet address, throttle aggressively.
+4. **Cap the gas budget.** `tx.getData().gasData.budget` — if a malicious wallet
+   bumped it to 1 SUI, refuse to sign.
+
+## Gas-coin contention
+
+A single gas coin is consumed by one tx at a time, so a busy app can deadlock if
+you sign hundreds of txs against one coin. Patterns to avoid that:
+
+- **Pre-split** a pool of small gas coins on the sponsor account (e.g. 50 × 0.01 SUI).
+- **Rotate** which coin you pass as `gasPayment` round-robin.
+- **Use a hosted service** — Shinami / Enoki handle this for you.
+
+## Where this composes well
+
+- **zkLogin onboarding** — first transaction is sponsored so the user can mint
+  before they hold any SUI.
+- **Game economies** — every player action is a sponsored tx; players never see gas.
+- **Loyalty programs** — brand pays for a redemption claim transaction.
+
+<Pager slug="sponsored-tx" />

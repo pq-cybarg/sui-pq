@@ -1,0 +1,102 @@
+import { Cmd } from '@/components/Cmd';
+import { Pager } from '@/components/Pager';
+
+# 3. Publishing
+
+Publishing a Move package compiles its sources to bytecode, sends it as a
+special transaction kind, and the network mints a new **package** object whose
+id is what everyone references afterward.
+
+## Minimum viable Move.toml
+
+```toml
+[package]
+name = "counter"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+
+[addresses]
+counter = "0x0"
+```
+
+`"0x0"` is a placeholder — the publish transaction replaces it with the freshly
+minted package id.
+
+## Build + test locally
+
+<Cmd>{`cd move/counter && sui move build && sui move test`}</Cmd>
+
+The `test` command runs every `#[test]` function. Tests use `sui::test_scenario`
+to simulate multi-tx flows with multiple senders. Example:
+
+```move
+#[test_only]
+module counter::counter_tests;
+
+use counter::counter::{Self, Counter};
+use sui::test_scenario as ts;
+
+const ALICE: address = @0xA;
+
+#[test]
+fun increment_and_reset() {
+    let mut scenario = ts::begin(ALICE);
+    counter::create(scenario.ctx());
+
+    scenario.next_tx(ALICE);
+    let mut c = scenario.take_shared<Counter>();
+    counter::increment(&mut c, scenario.ctx());
+    counter::increment(&mut c, scenario.ctx());
+    assert!(counter::value(&c) == 2, 0);
+    ts::return_shared(c);
+    scenario.end();
+}
+```
+
+## Publish to testnet
+
+<Cmd>{`sui client publish --gas-budget 200000000 ./move/counter`}</Cmd>
+
+The CLI returns a transaction with several useful object changes:
+
+- `published` — the new package, with `packageId`. **Save this somewhere.**
+- `created: UpgradeCap` — an owned object that lets you publish upgrades later.
+  Treat it like the deploy private key; lose it and the package is immutable.
+
+For convenience, the workspace's CLI wraps the command:
+
+<Cmd>{`pnpm cli publish move/counter`}</Cmd>
+
+## What you actually pay for
+
+Publishing costs SUI in proportion to bytecode size. A small package like
+`counter` is ~0.01 SUI on testnet. The framework itself is *not* re-deployed
+each time — your package only stores its own modules and their dependency hashes.
+
+## After publish
+
+You now have a `packageId`. To call a function inside it from the CLI:
+
+<Cmd>{`sui client call \\
+  --package 0x... \\
+  --module counter \\
+  --function create \\
+  --gas-budget 20000000`}</Cmd>
+
+For shared-object methods like `increment(c: &mut Counter, ...)`, pass the
+counter's id as an `--args` value:
+
+<Cmd>{`sui client call \\
+  --package 0x... \\
+  --module counter \\
+  --function increment \\
+  --args 0x<counter-id> \\
+  --gas-budget 20000000`}</Cmd>
+
+The next section shows the TypeScript-side equivalent — same operations, from a
+web app.
+
+<Pager slug="publishing" />

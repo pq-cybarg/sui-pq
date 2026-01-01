@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "mysten.move",
+    "rust-lang.rust-analyzer",
+    "tamasfe.even-better-toml",
+    "bradlc.vscode-tailwindcss"
+  ]
+}

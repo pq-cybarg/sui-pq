@@ -1,0 +1,71 @@
+import { Pager } from '@/components/Pager';
+import { TryWallet } from '@/components/TryWallet';
+
+<div className="hero">
+  <span className="chip accent">Sui · testnet</span>{' '}
+  <span className="chip">React 19 · Next 15</span>{' '}
+  <span className="chip">Move 2024</span>
+  <h1>Build on Sui, from zero.</h1>
+  <p>
+    Fourteen short steps. Every primitive in the Sui ecosystem — Move objects, the
+    TypeScript SDK, Slush wallet, Walrus storage, Seal secrets, zkLogin, DeepBook,
+    sponsored transactions, Lumiwave — explained and exercised on real testnet
+    infrastructure. No video, no slides, just code and live demos.
+  </p>
+</div>
+
+## What this is
+
+This tutorial is the long-form counterpart to the `sui-gen` workspace. The workspace
+is the monorepo (Move packages, TypeScript SDKs, demo apps); this tutorial walks
+through the *why* of each piece in the order a beginner would build them.
+
+Every page includes:
+
+- **Concept** — what the primitive is and why it exists.
+- **Code** — the minimum useful snippet, in TypeScript or Move.
+- **Try it** — a button that exercises the feature against live Sui testnet using
+  your wallet.
+
+## How to follow along
+
+You can read the entire thing without doing anything — every demo also points at a
+canonical artifact already deployed on testnet. To run the demos that mutate state,
+you'll need:
+
+- Any Sui wallet ([Slush](https://slush.app), Suiet, Phantom, Nightly, or OKX)
+- A bit of testnet SUI for gas (free, [step 1](/setup) shows how)
+
+## Why Sui
+
+Sui's distinguishing primitive is the **object**. Every on-chain thing —
+NFTs, coins, balances, app state — is a typed object with explicit ownership and
+abilities (`key`, `store`, `copy`, `drop`). This makes parallel execution trivial,
+gas predictable, and the developer experience way closer to ORM-style data than
+EVM-style storage slots.
+
+The Move 2024 edition (used throughout this workspace) gives you method syntax,
+struct fields, and explicit visibility — read your Sui Move and it looks like
+normal modern code.
+
+## The stack you're about to learn
+
+<div className="grid-2" style={{ marginTop: '1rem' }}>
+  <div className="card card-tight"><strong>Move 2024</strong><br/><span className="muted">on-chain logic</span></div>
+  <div className="card card-tight"><strong>@mysten/sui</strong><br/><span className="muted">TypeScript client</span></div>
+  <div className="card card-tight"><strong>@mysten/dapp-kit</strong><br/><span className="muted">wallet integration (Slush)</span></div>
+  <div className="card card-tight"><strong>@mysten/walrus</strong><br/><span className="muted">decentralized storage</span></div>
+  <div className="card card-tight"><strong>@mysten/seal</strong><br/><span className="muted">threshold secrets</span></div>
+  <div className="card card-tight"><strong>zkLogin</strong><br/><span className="muted">OAuth → Sui address</span></div>
+  <div className="card card-tight"><strong>DeepBook v3</strong><br/><span className="muted">on-chain CLOB</span></div>
+  <div className="card card-tight"><strong>Sponsored tx</strong><br/><span className="muted">gasless flows</span></div>
+</div>
+
+## A working wallet, right now
+
+If your wallet's installed, this connect button works immediately. Everything from
+here on builds on that handshake.
+
+<TryWallet />
+
+<Pager slug="" />

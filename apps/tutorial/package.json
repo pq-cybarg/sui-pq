@@ -1,0 +1,35 @@
+{
+  "name": "@sui-gen/tutorial",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3030",
+    "build": "next build",
+    "start": "next start --port 3030",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@mdx-js/loader": "^3.1.0",
+    "@mdx-js/react": "^3.1.0",
+    "@mysten/sui": "^1.18.0",
+    "@next/mdx": "^15.1.0",
+    "@sui-gen/lumiwave": "workspace:*",
+    "@sui-gen/sdk-core": "workspace:*",
+    "@sui-gen/seal-client": "workspace:*",
+    "@sui-gen/walrus-client": "workspace:*",
+    "@sui-gen/wallet-kit": "workspace:*",
+    "@types/mdx": "^2.0.13",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ts:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+
+  move:
+    name: Move
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache sui CLI
+        id: cache-sui
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/sui
+          key: sui-${{ runner.os }}-mainnet
+      - name: Install sui CLI
+        if: steps.cache-sui.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -fsSL https://github.com/MystenLabs/sui/releases/latest/download/sui-mainnet-ubuntu-x86_64.tgz | tar -xz -C ~/.local/bin
+          chmod +x ~/.local/bin/sui
+      - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - run: bash scripts/move-all.sh build
+      - run: bash scripts/move-all.sh test
+
+  fips205-verify:
+    name: FIPS-205 formal verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Lean toolchain (~200MB, version-pinned via lean-toolchain)
+        id: cache-elan
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan
+            proofs/.lake
+          key: elan-lake-${{ runner.os }}-${{ hashFiles('proofs/lean-toolchain', 'proofs/lakefile.lean') }}
+
+      - name: Install elan + Lean
+        if: steps.cache-elan.outputs.cache-hit != 'true'
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run the FIPS-205 verification pipeline
+        run: pnpm verify
+        # ↑ lake build (90+ machine-checked theorems including SHA-256 KATs,
+        #   28 verifier-execution proofs, 17 Move-source equivalences,
+        #   structural invariants, Move-bytecode equivalences)
+        # + Lean exe vs all 14 NIST ACVP official vectors
+        # + 100-case live differential vs noble
+        # + 1000-case fixture replay through the compiled Lean exe

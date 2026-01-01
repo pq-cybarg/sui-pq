@@ -1,0 +1,90 @@
+import { Pager } from '@/components/Pager';
+
+# 12. Lumiwave
+
+[Lumiwave](https://lumiwave.io) is a Web3 entertainment platform built on Sui.
+It issues the **LWA token** as a native Sui coin and exposes a partner service
+API for game studios to mint reward NFTs, look up user profiles, and trigger
+IP-licensed events.
+
+For Sui developers, Lumiwave is interesting on two counts:
+
+1. **LWA is a standard Sui `Coin<T>`.** Anything you'd do with SUI you can do with
+   LWA — balance queries, transfers, DeepBook routing, sponsorship of partner txs.
+2. **Their service API expects Sui-native auth.** Sessions are bound to wallet
+   addresses; you don't manage users in their database, you reference Sui
+   addresses.
+
+## Reading an LWA balance
+
+```ts
+import { getLwaBalance, DEFAULT_LUMIWAVE_CONFIG } from '@sui-gen/lumiwave';
+
+const balance = await getLwaBalance('0xuser…');
+// → bigint, in base units. Divide by 10^decimals from the CoinMetadata for display.
+
+console.log(DEFAULT_LUMIWAVE_CONFIG.coinType);
+// → '0x<pkg>::lwa::LWA'
+```
+
+The `coinType` is intentionally an env-var (`LUMIWAVE_COIN_TYPE`) — when the
+team migrates the package id (e.g. for a major version bump), you point at the
+new type without changing your code.
+
+## Transferring LWA
+
+```ts
+import { buildLwaTransfer } from '@sui-gen/lumiwave';
+
+const tx = await buildLwaTransfer({
+  from: signer.toSuiAddress(),
+  to:   '0xrecipient…',
+  amount: 1_000_000n,   // base units
+});
+// sign + execute via your wallet
+```
+
+`buildLwaTransfer` does the "merge then split" pattern: if the sender has 7
+different LWA coin objects from various sources, it merges them into one and
+splits off exactly the payment amount, so the recipient ends up with a single
+clean coin.
+
+## Service API
+
+The partner service uses bearer auth + standard REST. The workspace ships a
+minimal client that you extend with typed wrappers for whichever endpoints you
+actually call.
+
+```ts
+import { LumiwaveService } from '@sui-gen/lumiwave';
+
+const lumi = new LumiwaveService({ apiKey: process.env.LUMIWAVE_API_KEY });
+
+// e.g. resolve a Lumiwave platform handle to a Sui address
+const user = await lumi.resolveHandle('alice');
+// → { address: '0x…' } | null
+
+// Generic GET/POST for partner endpoints
+const profile = await lumi.get('/v1/users/' + user.address);
+```
+
+API keys are issued per-partner; for prototyping, the unauthenticated read
+endpoints are sufficient.
+
+## Wallet UX
+
+Slush, Suiet, Phantom — all surface LWA the same way they surface SUI, as long
+as the on-chain `CoinMetadata` is published. No app-specific code; the user
+sees "100.00 LWA" in their wallet list automatically.
+
+## Ecosystem composition
+
+Where this gets interesting:
+
+- **LWA-paid sponsored tx** — game studio sponsors player actions, billed in LWA.
+- **NFT drops with LWA payment + Walrus assets** — buyer pays LWA in a Kiosk
+  list; royalty rule pays creator in LWA; asset blob lives on Walrus.
+- **DeepBook pools** — LWA / SUI and LWA / USDC pools let users on-ramp to LWA
+  without going through a CEX.
+
+<Pager slug="lumiwave" />

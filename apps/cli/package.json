@@ -1,0 +1,27 @@
+{
+  "name": "@sui-gen/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "sui-gen": "./dist/index.js" },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "cli": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@mysten/sui": "^1.18.0",
+    "@sui-gen/lumiwave": "workspace:*",
+    "@sui-gen/pqc": "workspace:*",
+    "@sui-gen/sdk-core": "workspace:*",
+    "@sui-gen/walrus-client": "workspace:*",
+    "cac": "^6.7.14"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

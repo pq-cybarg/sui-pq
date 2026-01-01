@@ -1,0 +1,284 @@
+import { Pager } from '@/components/Pager';
+
+# 14. Post-quantum cryptography
+
+## TL;DR
+
+This workspace contains a **complete, working post-quantum signing, verification,
+AND authorization stack on Sui** — including a Move-native verifier for the full
+SLH-DSA construction and a smart-contract authorization primitive that effectively
+delivers PQ tx authorization at the contract layer.
+
+| Layer | Status in this workspace |
+| --- | --- |
+| Off-chain PQ sign / verify | ✅ `@sui-gen/pqc` — ML-DSA, SLH-DSA, FALCON, ML-KEM |
+| Hybrid classical + PQ tx signing | ✅ `@sui-gen/pqc/hybridSign` |
+| zkLogin → PQ binding + co-signed txs | ✅ `@sui-gen/pqc/createZkLoginPqBinding` + `pqWrapZkLoginTx` |
+| Move-native WOTS+ verification | ✅ `move/wots` (6/6 tests) |
+| Move-native SLH-DSA (full stack) | ✅ `move/slh_dsa` (6/6 tests, real end-to-end PQ verify) |
+| **PQ authorization at the contract layer** | ✅ `move/pq_guard` (8/8 tests) + `move/pq_vault` example (4/4 tests) |
+| **PQ-sponsored gas (user holds no classical key)** | ✅ `@sui-gen/pqc/PqSponsoredClient` + `pnpm cli sponsor-serve` |
+| **Native PQ tx auth on a local Sui validator** | ✅ `patches/` + `scripts/build-pq-validator.sh` (clone, patch, build, run) |
+| **PQ-native send — gas paid by the PQ-derived address itself** | ✅ `@sui-gen/pqc/signAndExecuteSlhDsa` + `pnpm cli pq-send <to> <amount>` |
+| On-chain PQ attestation registry | ✅ `move/pq_attestation` |
+| Native PQ tx auth on Mysten-managed mainnet/testnet | ⛔ network governance — see `docs/pq-validator-roadmap.md` |
+
+The "native PQ tx authorization" row is the only one we can't fix from outside Sui's
+codebase. But for almost every practical purpose, **`pq_guard` closes the gap**:
+your operations are PQ-authorized via a Move contract; the validator's classical
+signature check is only authenticating the gas payer.
+
+## What this workspace ships, in detail
+
+### 1. `@sui-gen/pqc` — TypeScript
+
+```ts
+import { keygen, sign, verify } from '@sui-gen/pqc';
+
+const kp = keygen('ML_DSA_65');
+const sig = sign(kp, new TextEncoder().encode('hello, PQ world'));
+verify('ML_DSA_65', kp.publicKey, new TextEncoder().encode('hello, PQ world'), sig);
+// → true
+```
+
+Schemes: ML-DSA-44/65/87, SLH-DSA (all 12 variants), FALCON-512/1024, ML-KEM-512/768/1024.
+
+### 2. Hybrid signing — classical + PQ in one envelope
+
+```ts
+import { hybridSign, hybridVerify } from '@sui-gen/pqc';
+
+const bundle = await hybridSign({ client, classicalSigner, pqKeypair, transaction: tx });
+await client.executeTransactionBlock({
+  transactionBlock: bundle.txBytes,
+  signature: bundle.classicalSignature,
+});
+const { ok } = await hybridVerify({ client, signature: bundle });
+```
+
+### 3. zkLogin PQ-wrap — closes the "PQ zkLogin" gap
+
+```ts
+import { createZkLoginPqBinding, pqWrapZkLoginTx, verifyPqWrappedZkLoginTx } from '@sui-gen/pqc';
+
+const { binding, secretKey } = createZkLoginPqBinding({ zkLoginAddress });
+const wrapped = await pqWrapZkLoginTx({ client, transaction: tx, pqKeypair, zkLoginAddress });
+verifyPqWrappedZkLoginTx(wrapped, binding);
+```
+
+### 4. ML-KEM — encryption to a recipient's PQ pubkey
+
+```ts
+import { kemKeygen, kemEncrypt, kemDecrypt } from '@sui-gen/pqc';
+
+const recipient = kemKeygen('ML_KEM_768');
+const packet = kemEncrypt('ML_KEM_768', recipient.publicKey, payload, aad);
+const plaintext = kemDecrypt('ML_KEM_768', recipient.secretKey, packet, aad);
+```
+
+### 5. `move/slh_dsa` — full SLH-DSA verification inside Move
+
+```move
+let ok = slh_dsa::verifier::verify(&pk, &message, &signature);
+```
+
+Full hash-based PQ signature verification on-chain. **6/6 Move tests** cover
+round-trip, tamper, message rebinding, length bounds. Test vectors generated
+from the matching TS reference so any bit drift is caught immediately.
+
+### 6. **`move/pq_guard` — PQ authorization at the contract layer**
+
+The headline. Closes the validator-side gap without touching validator code.
+
+```move
+// User registers their SLH-DSA pubkey once:
+pq_guard::register(SLH_DSA_LITE, pk, ctx);
+
+// Per operation, the FIRST PTB command verifies the PQ signature and
+// produces a non-storable witness:
+let auth = pq_guard::unlock(&mut identity, action_digest, signature, ctx);
+
+// Any function gated on the witness can ONLY be called via this flow:
+let coin = pq_vault::vault::withdraw(&mut vault, auth, recipient, amount, ctx);
+```
+
+Properties:
+
+- **Replay-safe** — every unlock increments `identity.nonce`; a signature
+  produced for nonce N is consumed by exactly one unlock.
+- **Action-bound** — the signed `action_digest` is propagated into the witness;
+  gated functions check it matches the intended call (e.g.
+  `vault::withdraw_action_digest(vault, to, amount)`).
+- **Sender-bound** — the witness records the sender at unlock time; gated
+  functions check it equals `ctx.sender()`.
+
+**The classical signature on the outer transaction is a gas-paying trampoline.**
+It can be a freshly-rotated, single-use ed25519 key with zero long-term security
+significance — the actual authority is the SLH-DSA verify inside `pq_guard::unlock`.
+
+8/8 Move tests cover the full surface including replay rejection, tamper, and
+cross-action binding.
+
+### 7. `move/pq_vault` — example PQ-gated app
+
+A toy SUI vault whose `withdraw` requires a `PqAuthorized` witness. Demonstrates
+the pattern end-to-end. **4/4 Move tests** cover happy-path withdraw, wrong
+sender, wrong action, non-owner.
+
+### 8. `@sui-gen/pqc/buildUnlockMessageBytes` + `addPqGuardUnlock`
+
+Off-chain helpers that compute the exact bytes the on-chain `pq_guard::unlock`
+verifies, and assemble the PTB:
+
+```ts
+import { buildUnlockMessageBytes, addPqGuardUnlock, slh } from '@sui-gen/pqc';
+
+const msg = buildUnlockMessageBytes({ sender, nonce, actionDigest });
+const sig = slh.packSignature(slh.sign(slhSecretKey, msg));
+
+const tx = new Transaction();
+const auth = addPqGuardUnlock(tx, { guardPackageId, identityId, actionDigest, signature: sig });
+tx.moveCall({ target: `${vaultPkg}::vault::withdraw`, arguments: [tx.object(vaultId), auth, ...] });
+```
+
+### 9. `move/pq_attestation` — registry
+
+Stores `(scheme, pubkey, sig, digest, nonce, app_tag, created_at)` tuples on-chain.
+Forward-compatible with native PQ verification when fastcrypto's SLH-DSA verifier
+is exposed as a Move primitive.
+
+### 10. **PQ-sponsored gas — user holds no classical key**
+
+The full "gas paid by PQ" answer. The user signs only with SLH-DSA, POSTs the
+request to a sponsor service, and the sponsor (which holds a classical key
+purely for operational reasons) builds + signs + submits a sponsored Sui
+transaction whose PTB calls `pq_guard::unlock` + the gated operation.
+
+```ts
+import { PqSponsoredClient, buildUnlockMessageBytes, slh } from '@sui-gen/pqc';
+import { sha256 } from '@noble/hashes/sha256';
+
+const actionDigest = sha256(new TextEncoder().encode('vault::withdraw(1000)'));
+const msg = buildUnlockMessageBytes({ sender: sponsorAddress, nonce, actionDigest });
+const sig = slh.packSignature(slh.sign(slhSecretKey, msg));
+
+const client = new PqSponsoredClient({ endpoint: 'http://sponsor:4000/sponsor' });
+const { digest, effectsStatus } = await client.submit({
+  pqIdentityId,
+  actionDigest,
+  pqSignature: sig,
+  gatedCall: {
+    target: '0xPKG::vault::withdraw',
+    arguments: [
+      { kind: 'object', id: vaultId },
+      { kind: 'pure',  type: 'address', value: recipient },
+      { kind: 'pure',  type: 'u64',     value: 1000n },
+    ],
+    witnessArgIndex: 1,
+  },
+});
+```
+
+Run the sponsor service from the CLI:
+
+```bash
+PQ_GUARD_PKG=0x…  PQ_SPONSOR_KEY=suiprivkey1…  \
+  pnpm cli sponsor-serve --port 4000 --allow 0xPKG::vault::withdraw
+```
+
+The user has **no classical key at all** — they never instantiate a Sui signer.
+The sponsor's classical key signs the outer tx and pays gas, but the actual
+authority is entirely the SLH-DSA proof the user provided in the HTTP body.
+
+### 11. **Local Sui validator with native PQ tx auth**
+
+For development and CI where you want to simulate the post-2030 world where
+Mysten ships native ML-DSA: a patch-and-build workflow that adds
+`SignatureScheme::SlhDsaLite` (flag `0x07`) to a local Sui fork.
+
+```bash
+# One-time: clone Sui, apply patches, build release binaries (~10–30 min)
+bash scripts/build-pq-validator.sh
+
+# Subsequent runs:
+bash scripts/build-pq-validator.sh --launch-only
+```
+
+Two patch files in `patches/`:
+
+- `0001-add-slh-dsa-lite-signature-scheme.patch` — extends `SignatureScheme`,
+  the `GenericSignature::verify_authenticator` dispatch, and the protocol
+  config feature flag (~43 LOC).
+- `0002-fastcrypto-slh-dsa-lite.patch` — adds a 220-line pure-Rust SLH-DSA-LITE
+  verifier to `fastcrypto-experimental`, byte-identical to the workspace's TS
+  reference and Move verifier.
+
+After the patched node is up on `127.0.0.1:9000`, an SDK-side signature with
+flag byte `0x07` is valid tx authentication — **gas paid by the PQ-derived
+address**. No classical key anywhere. The address derivation is
+
+```
+addr = '0x' + blake2b256( 0x07 || PK.seed || PK.root )
+```
+
+and `@sui-gen/pqc` exposes everything needed to build the signature blob and
+submit a normal Sui transaction:
+
+```ts
+import { Transaction } from '@mysten/sui/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { signAndExecuteSlhDsa, slh, slhDsaAddress } from '@sui-gen/pqc';
+
+const { pk, sk } = slh.keygen(seed, skSeed);
+const sender = slhDsaAddress(pk);
+
+const client = new SuiClient({ url: 'http://127.0.0.1:9000' });
+const tx = new Transaction();
+const [coin] = tx.splitCoins(tx.gas, [1_000_000n]);
+tx.transferObjects([coin], recipient);
+
+const res = await signAndExecuteSlhDsa({ client, transaction: tx, pk, sk });
+// → res.digest, res.effects.status.status === 'success'
+```
+
+The CLI wraps the same flow:
+
+```bash
+pnpm cli pq-address                          # show the PQ-derived address
+pnpm cli pq-send 0xabc… 1000000              # send 1M MIST from that address
+```
+
+Both commands sign with SLH-DSA-LITE end-to-end; **no Ed25519 / secp256k1 /
+zkLogin key is ever instantiated**. The patched local validator parses the
+flag-`0x07` blob, verifies the SLH-DSA signature in fastcrypto, checks the
+blake2b-derived address matches `tx.sender`, and lets the tx through. **Gas
+comes from the PQ-derived address's own coins** — no sponsor, no classical
+trampoline.
+
+The wire format is:
+
+| Field | Bytes |
+| --- | --- |
+| flag (`0x07`) | 1 |
+| `PK.seed` | 32 |
+| `PK.root` | 32 |
+| packed SLH-DSA-LITE signature | 5,056 |
+| **Total** | **5,121** |
+
+## The remaining unfixable bit
+
+| Gap | Why | What we ship instead |
+| --- | --- | --- |
+| **Mysten-managed mainnet/testnet accepting native PQ tx auth** | Network governance decision; only Mysten + validator quorum can ship it | Run the patched local validator (section 11) for CI / dev; use `pq_guard` (section 6) for production deployments today |
+| FIPS-205-byte-exact SLH-DSA in Move | We use n=32 (full SHA-256) instead of FIPS-205 n=16; simpler msg-digest function | `move/slh_dsa` ships SLH-DSA-LITE today; FIPS exactness would track fastcrypto's `sphincs` module when it lands as a Move primitive (would supersede this module without changing the API) |
+| ML-DSA / FALCON inside Move | Polynomial arithmetic over Z\_q + NTT is not gas-feasible without precompiles | Off-chain via `@sui-gen/pqc`; the hybrid pattern carries the PQ guarantee on-chain via attestation; `pq_guard` uses SLH-DSA (hash-based) which IS feasible |
+
+## Test inventory
+
+This entire stack is covered by **37 TypeScript tests + 27 Move tests** that all
+pass against the same byte format. Regenerating
+`move/pq_guard/tests/test_vectors.move` from `@sui-gen/pqc` produces a
+byte-identical file — any future TS↔Move drift is caught as a unit-test
+regression, not a chain-side surprise.
+
+<Pager slug="pqc" />

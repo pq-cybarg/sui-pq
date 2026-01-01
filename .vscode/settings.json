@@ -1,0 +1,18 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "[move]": {
+    "editor.tabSize": 4
+  },
+  "files.associations": {
+    "*.move": "move",
+    "Move.toml": "toml"
+  },
+  "files.exclude": {
+    "**/dist": true,
+    "**/.tsbuildinfo": true,
+    "**/build": true
+  }
+}

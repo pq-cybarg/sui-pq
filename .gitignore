@@ -1,0 +1,51 @@
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Move
+move/**/build/
+move/**/.coverage_map.mvcov
+move/**/.trace
+# Ephemeral publication metadata (contains local paths; not for VCS)
+**/*.local.toml
+
+# Lean (proofs/)
+.lake/
+*.olean
+*.ilean
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+keystore.json
+sui_config/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Misc
+.cache/
+.tmp/
+tmp/

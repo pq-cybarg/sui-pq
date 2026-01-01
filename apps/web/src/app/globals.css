@@ -1,0 +1,143 @@
+:root {
+  --bg: #0b0d10;
+  --fg: #f5f7fa;
+  --muted: #93a1b3;
+  --accent: #4da2ff; /* Sui aqua */
+  --card: #141820;
+  --border: #232a35;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+a {
+  color: var(--accent);
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+.muted {
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+button {
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* ── PQ workbench (apps/web/src/app/pqc) ───────────────────────────────── */
+.pq-page { max-width: 880px; margin: 3rem auto; padding: 0 1.25rem; }
+.pq-page h1 { font-size: 2rem; margin: 0 0 0.25rem; letter-spacing: -0.01em; }
+.pq-page h2 {
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--muted); font-weight: 600; margin: 2rem 0 0.75rem;
+}
+.pq-page h2 .num {
+  display: inline-block; width: 1.4rem; height: 1.4rem; line-height: 1.4rem;
+  text-align: center; background: var(--accent); color: var(--bg);
+  border-radius: 4px; margin-right: 0.5rem; font-weight: 700;
+  vertical-align: middle;
+}
+.pq-page .lede { color: var(--muted); margin: 0 0 1.5rem; }
+
+.pq-row { display: grid; grid-template-columns: max-content 1fr auto; gap: 0.5rem 1rem; align-items: center; margin: 0.4rem 0; }
+.pq-row .label { color: var(--muted); font-size: 0.85rem; font-family: ui-monospace, monospace; }
+.pq-row .val   { font-family: ui-monospace, monospace; font-size: 0.85rem; word-break: break-all; }
+.pq-row .val.addr { color: var(--accent); font-weight: 600; }
+
+.copy-btn {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.15rem 0.5rem; font-size: 0.72rem; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+}
+.copy-btn:hover { color: var(--fg); border-color: var(--accent); }
+.copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+
+.pq-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.55rem; border-radius: 999px; border: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); font-family: ui-monospace, monospace; }
+.pq-chip.ok  { color: #4ade80; border-color: rgba(74, 222, 128, 0.4); background: rgba(74, 222, 128, 0.06); }
+.pq-chip.bad { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.4); background: rgba(255, 107, 107, 0.06); }
+.pq-chip.warn{ color: #ffb84d; border-color: rgba(255, 184, 77, 0.4); background: rgba(255, 184, 77, 0.06); }
+
+.pq-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0.75rem 0 0; }
+.pq-actions .stage { color: var(--muted); font-size: 0.85rem; }
+button.ghost {
+  background: transparent; color: var(--fg);
+  border: 1px solid var(--border); padding: 0.5rem 1rem;
+  border-radius: 8px; font-weight: 500; cursor: pointer;
+}
+button.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+.hex-viewer {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 0.5rem;
+  font-family: ui-monospace, monospace; font-size: 0.8rem;
+  line-height: 1.55; word-break: break-all; max-height: 8rem; overflow-y: auto;
+  color: var(--muted); position: relative;
+}
+.hex-viewer .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; }
+
+/* signature wire-format breakdown bar */
+.sig-strip {
+  display: grid; grid-auto-flow: column; gap: 2px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px; margin: 0.75rem 0;
+}
+.sig-strip > div {
+  font-family: ui-monospace, monospace; font-size: 0.7rem;
+  padding: 0.35rem 0.4rem; border-radius: 4px; text-align: center;
+  color: var(--bg); font-weight: 600; cursor: default;
+}
+.sig-strip .seg-flag { background: #ffb84d; }
+.sig-strip .seg-seed { background: #4da2ff; }
+.sig-strip .seg-root { background: #66d4ff; }
+.sig-strip .seg-sig  { background: #4ade80; }
+
+.scheme-pick { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0; }
+.scheme-pick label {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 999px;
+  font-size: 0.8rem; cursor: pointer; color: var(--muted); user-select: none;
+}
+.scheme-pick label:has(input:checked) {
+  background: rgba(77, 162, 255, 0.1); border-color: var(--accent); color: var(--accent);
+}
+.scheme-pick input { display: none; }
+
+.result-line { font-family: ui-monospace, monospace; font-size: 0.85rem; margin: 0.35rem 0; color: var(--muted); }
+.result-line strong { color: var(--fg); }
+
+.divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+input,
+textarea {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  width: 100%;
+  font: inherit;
+}

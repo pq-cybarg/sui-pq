@@ -1,0 +1,88 @@
+import { Pager } from '@/components/Pager';
+import { TryMintNft } from '@/components/TryMintNft';
+
+# 14. Capstone — mint an NFT backed by Walrus
+
+You've seen each primitive in isolation. The capstone composes them in a single
+flow:
+
+1. **Walrus**: upload the user's image content; get a blob id.
+2. **Move + dApp Kit**: build a `Transaction` calling `genesis_nft::mint(name, desc,
+   walrus_url, recipient)` and sign with the user's wallet.
+3. **Sui**: validators mint the NFT object, transfer it to the user, and the
+   `Minted` event lands on the indexer.
+
+Three protocols, one click. This is the canonical pattern for "decentralized
+asset" apps: blob storage on Walrus, ownership + metadata on Sui, optionally
+gated by Seal.
+
+## The full client code
+
+```tsx
+import { Transaction } from '@mysten/sui/transactions';
+import { WalrusHttpClient } from '@sui-gen/walrus-client';
+import { useActiveAddress, useSignAndExecuteTransaction, useSuiClient } from '@sui-gen/wallet-kit';
+
+const walrus = new WalrusHttpClient();
+
+async function mint(name: string, desc: string, imageContent: string) {
+  // 1. Walrus upload
+  const { blobId } = await walrus.put(imageContent, { epochs: 5 });
+  const imgUrl = walrus.url(blobId);   // canonical aggregator URL
+
+  // 2. Build the mint tx
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PKG}::genesis_nft::mint`,
+    arguments: [
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(name))),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(desc))),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(imgUrl))),
+      tx.pure.address(recipient),
+    ],
+  });
+
+  // 3. Sign + execute via wallet
+  const res = await signAndExecute({ transaction: tx });
+  await client.waitForTransaction({ digest: res.digest, options: { showObjectChanges: true } });
+  // res.objectChanges contains the new NFT id, ready to display
+}
+```
+
+## Try it
+
+<TryMintNft />
+
+The minted NFT renders in any Sui wallet that honors `Display` (Slush, Suiet,
+Phantom). The `image_url` field points at the aggregator URL, so the image
+loads from Walrus — fully decentralized.
+
+## What you just learned
+
+You can now build a Sui app from zero:
+
+- ✅ Move 2024 modules with shared/owned objects, events, and capability tokens
+- ✅ Compiling, publishing, and calling packages from the CLI
+- ✅ The TypeScript SDK — `SuiClient`, `Transaction`, signers
+- ✅ Wallet integration via the Wallet Standard (Slush, Suiet, Phantom, etc.)
+- ✅ Walrus blob storage — public publisher *and* wallet-paid uploads
+- ✅ Seal threshold-encrypted secrets gated by on-chain Move logic
+- ✅ zkLogin: OAuth → Sui address with no key custody
+- ✅ DeepBook v3 — on-chain CLOB, composable from Move
+- ✅ Sponsored transactions for gasless UX
+- ✅ Kiosk + Display + TransferPolicy for NFTs and royalties
+- ✅ Lumiwave LWA token + partner service API
+- ✅ Event indexing — query, poll, GraphQL, and checkpoint readers
+
+The `sui-gen` workspace this tutorial sits on top of is the reference monorepo —
+each section here corresponds to a directory under `packages/`, `move/`, or
+`apps/`. Fork it, gut what you don't need, build something.
+
+## Next steps
+
+- **Read the architecture doc**: `docs/architecture.md`
+- **Try the dApp**: `pnpm --filter @sui-gen/web dev`
+- **Publish your own version**: `pnpm cli publish move/<your-package>`
+- **Join the Sui Discord**: [discord.gg/sui ↗](https://discord.gg/sui)
+
+<Pager slug="capstone" />

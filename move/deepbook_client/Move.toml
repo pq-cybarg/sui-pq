@@ -1,0 +1,12 @@
+[package]
+name = "deepbook_client"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+# DeepBook v3 (mainnet): published package id 0xdee9... — depend on the Move source if you fork.
+# DeepBookV3 = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/deepbook", rev = "main" }
+
+[addresses]
+deepbook_client = "0x0"

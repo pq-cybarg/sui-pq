@@ -1,0 +1,115 @@
+import { Pager } from '@/components/Pager';
+
+# 4. TypeScript SDK
+
+The official client is `@mysten/sui`. Three primitives cover ~90% of what you'll
+do from JavaScript: **SuiClient** (read state), **Transaction** (build operations),
+and **Signer** (sign + execute).
+
+## SuiClient — reading state
+
+```ts
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+
+const client = new SuiClient({ url: getFullnodeUrl('testnet') });
+
+// Object reads
+const obj = await client.getObject({
+  id: '0xe1cd379…b44552',
+  options: { showContent: true, showOwner: true },
+});
+
+// Balance reads
+const { totalBalance } = await client.getBalance({ owner: '0xe252…' });
+
+// Events
+const events = await client.queryEvents({
+  query: { MoveEventType: '0x324…::counter::Incremented' },
+  limit: 20,
+  order: 'descending',
+});
+```
+
+Most reads return paginated results — pass `cursor` from the previous call to
+paginate forward.
+
+## Transaction — building operations
+
+A `Transaction` is a programmable bundle: multiple Move calls, coin splits, and
+object transfers in one atomic unit. The pattern: instantiate, add commands,
+let the SDK serialize before signing.
+
+```ts
+import { Transaction } from '@mysten/sui/transactions';
+
+const tx = new Transaction();
+
+// Call a Move function
+tx.moveCall({
+  target: `${PKG}::counter::increment`,
+  arguments: [tx.object(counterId)],
+});
+
+// Transfer SUI inline (no separate tx needed)
+const [coin] = tx.splitCoins(tx.gas, [1_000_000n]);
+tx.transferObjects([coin], '0xrecipient');
+```
+
+## Signer — execute
+
+A `Signer` produces signatures. For server-side scripts:
+
+```ts
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+
+const { secretKey } = decodeSuiPrivateKey(process.env.SUI_PRIVATE_KEY!);
+const signer = Ed25519Keypair.fromSecretKey(secretKey);
+
+const res = await client.signAndExecuteTransaction({
+  transaction: tx,
+  signer,
+  options: { showEffects: true, showEvents: true },
+});
+
+// Wait for the transaction to be observed by the indexer
+await client.waitForTransaction({ digest: res.digest });
+```
+
+For browsers, the signer is the user's wallet — that's the next section.
+
+## @sui-gen/sdk-core
+
+This workspace's `@sui-gen/sdk-core` thinly wraps the official SDK to avoid
+boilerplate:
+
+```ts
+import { getClient, signerFromEnv, executeTx } from '@sui-gen/sdk-core';
+
+const client = getClient({ network: 'testnet' });    // memoized
+const signer = signerFromEnv('SUI_PRIVATE_KEY');     // throws if missing
+const res = await executeTx(client, signer, tx);
+```
+
+The two non-obvious functions:
+
+- `resolveNetwork()` — reads `SUI_NETWORK` (server) or `NEXT_PUBLIC_SUI_NETWORK`
+  (browser), validates against `mainnet | testnet | devnet | localnet`, and
+  throws on garbage values. Use this everywhere instead of hardcoding URLs.
+- `findCreatedObjectId(res, /Counter/)` — extracts the first newly-created object
+  matching a type predicate from a tx response. Saves you the chore of digging
+  through `objectChanges` after every publish/mint.
+
+## Common gotchas
+
+- **`tx.object(id)` vs `tx.pure(id)`** — Move function arguments that are typed as
+  `&Counter` need `tx.object`. Arguments typed as `vector<u8>`, `u64`, `address`,
+  etc. need `tx.pure.<type>(value)`. Pass the wrong one and you'll get a cryptic
+  ABI mismatch.
+- **`waitForTransaction` is essential** — `signAndExecuteTransaction` returns
+  when the validators agree, but indexer-backed queries can lag by a checkpoint.
+  Always `waitForTransaction` before re-reading the object you just modified.
+- **Gas budgets** — set them. The CLI auto-budgets, the SDK does not. A safe
+  default for simple calls is `20_000_000`; for publishes, `200_000_000`.
+
+<Pager slug="sdk" />

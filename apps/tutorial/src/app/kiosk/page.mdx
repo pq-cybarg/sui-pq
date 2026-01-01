@@ -1,0 +1,126 @@
+import { Pager } from '@/components/Pager';
+
+# 11. Kiosk + NFTs
+
+Two distinct primitives that work together:
+
+- **NFT pattern** — the canonical way to declare a token type with metadata.
+  Uses a one-time witness (OTW), `Publisher`, and `Display`.
+- **Kiosk** — the standardized marketplace primitive. Holds NFTs you've listed,
+  enforces `TransferPolicy` rules (royalties, lockup, etc.) on every transfer.
+
+## The OTW + Display pattern
+
+```move
+module nft::genesis_nft;
+
+use sui::display;
+use sui::package;
+
+public struct GenesisNFT has key, store {
+    id: UID,
+    name: String,
+    description: String,
+    image_url: Url,
+    creator: address,
+}
+
+// One-time witness: exactly one instance, only available in `init`.
+public struct GENESIS_NFT has drop {}
+
+fun init(otw: GENESIS_NFT, ctx: &mut TxContext) {
+    let publisher = package::claim(otw, ctx);
+    let keys   = vector[b"name".to_string(),         b"description".to_string(),
+                        b"image_url".to_string(),    b"creator".to_string()];
+    let values = vector[b"{name}".to_string(),       b"{description}".to_string(),
+                        b"{image_url}".to_string(),  b"{creator}".to_string()];
+    let mut disp = display::new_with_fields<GenesisNFT>(&publisher, keys, values, ctx);
+    disp.update_version();
+
+    transfer::public_transfer(publisher, ctx.sender());
+    transfer::public_transfer(disp, ctx.sender());
+}
+
+public fun mint(name, description, image_url, recipient, ctx) {
+    let nft = GenesisNFT { id: object::new(ctx), name, description, image_url, creator: ctx.sender() };
+    transfer::public_transfer(nft, recipient);
+}
+```
+
+### Why each piece
+
+- **One-time witness** (`GENESIS_NFT`) — a struct with only `drop` that's created
+  exactly once, in `init`. Used as a capability that proves "I'm the genesis of
+  this module." `display::new_with_fields` requires it.
+- **Publisher** — owned object that authorizes Display + TransferPolicy creation
+  for any type in your package. Lose it and you can't update Display fields.
+- **Display** — wallets and explorers read this object to render your NFT.
+  Template substitution: `{name}` in the value gets replaced with the actual
+  field at render time.
+
+`name`, `description`, `image_url`, `creator` are the conventional fields every
+wallet honors. Walrus URLs are valid `image_url` values — see the capstone.
+
+## Listing in a Kiosk with royalty enforcement
+
+```move
+module marketplace_kiosk::marketplace;
+
+use sui::transfer_policy::{TransferPolicy, TransferRequest, TransferPolicyCap};
+
+public struct Royalty has drop {}
+public struct RoyaltyConfig has store, drop { bps: u16, recipient: address }
+
+public fun add_rule<T: key + store>(
+    policy: &mut TransferPolicy<T>,
+    cap: &TransferPolicyCap<T>,
+    recipient: address,
+) {
+    transfer_policy::add_rule(Royalty {}, policy, cap, RoyaltyConfig { bps: 200, recipient });
+}
+
+public fun pay<T: key + store>(
+    policy: &mut TransferPolicy<T>,
+    request: &mut TransferRequest<T>,
+    payment: Coin<SUI>,
+) {
+    let cfg: &RoyaltyConfig = transfer_policy::get_rule(Royalty {}, policy);
+    let owed = ((transfer_policy::paid(request) as u128) * (cfg.bps as u128) / 10_000) as u64;
+    assert!(coin::value(&payment) >= owed, 0);
+    transfer::public_transfer(payment, cfg.recipient);
+    transfer_policy::add_receipt(Royalty {}, request);
+}
+```
+
+The trick: every transfer must produce a `TransferRequest` and accumulate
+receipts (one per rule) before it can be "confirmed". Try to skip the royalty
+and the transfer fails atomically. No off-chain enforcement, no marketplace
+allowlists.
+
+## TypeScript side
+
+`@mysten/kiosk` wraps the standard operations:
+
+```ts
+import { createKioskClient } from '@sui-gen/kiosk';
+import { KioskTransaction } from '@mysten/kiosk';
+
+const kiosk = createKioskClient({ network: 'testnet' });
+const tx = new Transaction();
+
+const ktx = new KioskTransaction({ transaction: tx, kioskClient: kiosk });
+ktx.create();
+ktx.place({ item: nftId, itemType: `${PKG}::genesis_nft::GenesisNFT` });
+ktx.list({ item: nftId, itemType: `...::GenesisNFT`, price: 5_000_000_000n });   // 5 SUI
+ktx.shareAndTransferCap(userAddr);
+ktx.finalize();
+```
+
+## Where Kiosk shines
+
+- **Royalty enforcement** that *can't* be bypassed by direct transfers.
+- **Lock-and-rent** patterns: list an NFT for a fixed-term rental, automatic return.
+- **Marketplace neutrality** — every dApp can read every Kiosk; you're not
+  locked into one marketplace's database.
+
+<Pager slug="kiosk" />

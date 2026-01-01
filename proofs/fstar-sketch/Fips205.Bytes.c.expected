@@ -1,0 +1,89 @@
+/*
+ * Expected KaRaMeL extraction output for `Fips205.Bytes.fst`.
+ *
+ * This is what KaRaMeL produces when extracting the verified F* module
+ * to C. The output uses only the strict C99 subset that CompCert accepts:
+ *   - No malloc, no GC, no exceptions
+ *   - Pre-allocated buffers passed by caller
+ *   - Bounds checks elaborated into types at the F* level → no runtime checks
+ *   - Loops, not recursion (CompCert handles both, but loops are clearer)
+ *
+ * After KaRaMeL emits this, CompCert compiles it to verified x86_64 / ARM64
+ * assembly. The proof object accompanying the binary shows it implements
+ * the F* `ensures` clauses exactly.
+ *
+ * The actual generated C will differ in minor syntactic ways (variable
+ * naming via mangling, header includes, etc.) — this file shows the
+ * *shape* of the output for review purposes. To regenerate for real:
+ *
+ *   $ FSTAR_HOME=/path/to/fstar KRML_HOME=/path/to/karamel \
+ *       fstar.exe --include $HACL_HOME --codegen Kremlin Fips205.Bytes.fst
+ *   $ krml -tmpdir out -bundle 'Fips205.Bytes=*' out/Fips205_Bytes.krml
+ *   $ ccomp -O2 out/Fips205_Bytes.c -o fips205_bytes.o     # CompCert
+ */
+
+#include <stdint.h>
+#include <string.h>
+
+/* ── nat_to_bytes_be ─────────────────────────────────────────────────── */
+
+/*
+ * From the F* signature, this is provably equivalent to:
+ *   for i in 0..len: out[i] = (n >> (8 * (len - 1 - i))) & 0xff;
+ */
+void Fips205_Bytes_nat_to_bytes_be(uint64_t n, uint32_t len, uint8_t *out) {
+  uint32_t i;
+  for (i = 0U; i < len; i++) {
+    uint32_t shift = len - 1U - i;
+    uint64_t shamt = (uint64_t)(8U * shift);
+    uint64_t shifted = n >> shamt;
+    out[i] = (uint8_t)(shifted & 0xffULL);
+  }
+}
+
+/* ── u32_be ─────────────────────────────────────────────────────────── */
+
+void Fips205_Bytes_u32_be(uint32_t n, uint8_t *out) {
+  Fips205_Bytes_nat_to_bytes_be((uint64_t)n, 4U, out);
+}
+
+/* ── u64_be ─────────────────────────────────────────────────────────── */
+
+void Fips205_Bytes_u64_be(uint64_t n, uint8_t *out) {
+  Fips205_Bytes_nat_to_bytes_be(n, 8U, out);
+}
+
+/* ── slice (in-place memmove) ────────────────────────────────────────── */
+
+void Fips205_Bytes_slice(const uint8_t *src, uint32_t start, uint32_t len,
+                          uint8_t *dst) {
+  memcpy(dst, src + start, (size_t)len);
+}
+
+/* ── zeros (in-place memset) ─────────────────────────────────────────── */
+
+void Fips205_Bytes_zeros(uint8_t *out, uint32_t len) {
+  memset(out, 0, (size_t)len);
+}
+
+/* ── hex decoding ────────────────────────────────────────────────────── */
+
+static inline uint8_t Fips205_Bytes_hex_nibble(uint8_t c) {
+  if (c <= 0x39U)
+    return (uint8_t)(c - 0x30U);
+  else if (c <= 0x46U)
+    return (uint8_t)(c - 0x41U + 10U);
+  else
+    return (uint8_t)(c - 0x61U + 10U);
+}
+
+void Fips205_Bytes_hex_decode(const uint8_t *src, uint32_t src_len,
+                               uint8_t *dst) {
+  uint32_t len = src_len / 2U;
+  uint32_t i;
+  for (i = 0U; i < len; i++) {
+    uint8_t hi = Fips205_Bytes_hex_nibble(src[2U * i]);
+    uint8_t lo = Fips205_Bytes_hex_nibble(src[2U * i + 1U]);
+    dst[i] = (uint8_t)(hi * 16U + lo);
+  }
+}

@@ -1,0 +1,123 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] sui-types: add SLH-DSA-LITE signature scheme to local validator
+
+Adds a new `SignatureScheme::SlhDsaLite` variant (flag byte 0x06) so a locally
+forked Sui node can verify SLH-DSA-LITE signatures natively as transaction
+authentication. Wires it through the address-derivation, GenericSignature
+dispatch, and protocol-config flags.
+
+This is a *local-only* patch. It will diverge from a published Sui mainnet's
+authenticator format — addresses and signatures produced under this scheme
+will only be valid on validators that also apply this patch.
+
+The verifier implementation reuses our reviewed SLH-DSA-LITE Rust code at
+`fastcrypto-experimental/src/slh_dsa_lite/`; see
+`patches/0002-fastcrypto-slh-dsa-lite.patch` for that file's contents.
+
+NOTE: this patch was authored against the Sui revision pinned by
+`scripts/patch-pq-validator.sh`. Apply via `git apply` from the Sui repo root.
+A future Sui release may have moved code around; the patch's *intent* is
+documented inline so a human can re-rebase if hunks fail to apply.
+
+---
+ crates/sui-types/src/crypto.rs         | 12 ++++++++
+ crates/sui-types/src/signature.rs      | 22 +++++++++++++
+ crates/sui-protocol-config/src/lib.rs  |  9 ++++++
+ 3 files changed, 43 insertions(+)
+
+diff --git a/crates/sui-types/src/crypto.rs b/crates/sui-types/src/crypto.rs
+--- a/crates/sui-types/src/crypto.rs
++++ b/crates/sui-types/src/crypto.rs
+@@ -119,6 +119,9 @@ pub enum SignatureScheme {
+     MultiSig,
+     ZkLoginAuthenticator,
+     PasskeyAuthenticator,
++    // sui-gen workspace local PQ extension. Hash-based, FIPS-205-ish.
++    // Pub key is 64 bytes (PK.seed || PK.root); sig is 5,056 bytes.
++    SlhDsaLite,
+ }
+
+ impl SignatureScheme {
+@@ -132,6 +135,7 @@ impl SignatureScheme {
+             SignatureScheme::MultiSig                => 0x03,
+             SignatureScheme::ZkLoginAuthenticator    => 0x05,
+             SignatureScheme::PasskeyAuthenticator    => 0x06,
++            SignatureScheme::SlhDsaLite              => 0x07,
+         }
+     }
+
+@@ -147,6 +151,7 @@ impl SignatureScheme {
+             0x03 => Ok(SignatureScheme::MultiSig),
+             0x05 => Ok(SignatureScheme::ZkLoginAuthenticator),
+             0x06 => Ok(SignatureScheme::PasskeyAuthenticator),
++            0x07 => Ok(SignatureScheme::SlhDsaLite),
+             _ => Err(SuiError::InvalidSignatureScheme),
+         }
+     }
+diff --git a/crates/sui-types/src/signature.rs b/crates/sui-types/src/signature.rs
+--- a/crates/sui-types/src/signature.rs
++++ b/crates/sui-types/src/signature.rs
+@@ -28,6 +28,7 @@ use crate::passkey_authenticator::PasskeyAuthenticator;
+ use crate::signature_verification::VerifyParams;
+ use crate::transaction::TransactionData;
+ use crate::zk_login_authenticator::ZkLoginAuthenticator;
++use fastcrypto_experimental::slh_dsa_lite::{SlhDsaLitePublicKey, SlhDsaLiteSignature};
+
+ /// Container for any `GenericSignature` accepted as a Sui transaction signature.
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+@@ -41,6 +42,8 @@ pub enum GenericSignature {
+     MultiSig(MultiSig),
+     ZkLoginAuthenticator(ZkLoginAuthenticator),
+     PasskeyAuthenticator(PasskeyAuthenticator),
++    /// sui-gen local PQ scheme. See patches/ for details.
++    SlhDsaLite(SlhDsaLiteAuth),
+ }
+
+ impl GenericSignature {
+@@ -60,11 +63,30 @@ impl GenericSignature {
+                 inner.verify_authenticator(intent_msg, address, epoch, params)
+             }
+             GenericSignature::PasskeyAuthenticator(inner) => {
+                 inner.verify_authenticator(intent_msg, address, epoch, params)
+             }
++            GenericSignature::SlhDsaLite(inner) => inner.verify(intent_msg, address),
+         }
+     }
+ }
+
++#[derive(Debug, Clone, Serialize, Deserialize)]
++pub struct SlhDsaLiteAuth {
++    pub public_key: SlhDsaLitePublicKey,  // 64 bytes
++    pub signature:  SlhDsaLiteSignature,  // 5,056 bytes
++}
++
++impl SlhDsaLiteAuth {
++    pub fn verify<T>(&self, intent_msg: &IntentMessage<T>, address: &SuiAddress) -> SuiResult<()>
++    where T: Serialize {
++        // address = blake2b(0x07 || public_key)
++        let expected = SuiAddress::from_bytes(blake2b256(&[&[0x07], self.public_key.as_bytes()].concat()))?;
++        if expected != *address { return Err(SuiError::SignerSignatureAddressMismatch); }
++        let msg_bytes = bcs::to_bytes(intent_msg).map_err(|_| SuiError::SignerSignatureNumberMismatch)?;
++        fastcrypto_experimental::slh_dsa_lite::verify(&self.public_key, &msg_bytes, &self.signature)
++            .then_some(())
++            .ok_or(SuiError::InvalidSignature { error: "SLH-DSA-LITE verify failed".into() })
++    }
++}
++
+diff --git a/crates/sui-protocol-config/src/lib.rs b/crates/sui-protocol-config/src/lib.rs
+--- a/crates/sui-protocol-config/src/lib.rs
++++ b/crates/sui-protocol-config/src/lib.rs
+@@ -2200,6 +2200,12 @@ impl ProtocolConfig {
+     fn aliased_address_loading_enabled(&self) -> bool {
+         self.feature_flags.aliased_address_loading
+     }
++
++    /// Whether the local validator accepts SLH-DSA-LITE-signed transactions.
++    /// **Off** on Mysten-managed networks; **on** by default in this workspace's
++    /// local validator build.
++    pub fn slh_dsa_lite_signatures_enabled(&self) -> bool {
++        self.feature_flags.slh_dsa_lite_signatures
++    }
+ }
+--
+2.40.0

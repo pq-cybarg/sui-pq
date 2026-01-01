@@ -1,0 +1,103 @@
+import { Pager } from '@/components/Pager';
+import { TryCounter } from '@/components/TryCounter';
+
+# 5. Slush wallet
+
+Slush is Mysten Labs' first-party Sui wallet (renamed from "Sui Wallet" in 2024).
+It implements the **Wallet Standard**, which means a dApp doesn't need any
+Slush-specific code — wallet detection is generic. Suiet, Phantom, Nightly, and
+OKX all show up in the same UI.
+
+## One-time setup
+
+The integration is `@mysten/dapp-kit` wrapped in three providers. The workspace's
+`@sui-gen/wallet-kit` bundles them so you only think about it once.
+
+```tsx
+// app/layout.tsx
+import { SuiKitProvider } from '@sui-gen/wallet-kit';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <SuiKitProvider defaultNetwork="testnet">{children}</SuiKitProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+What that expands to under the hood:
+
+```tsx
+<QueryClientProvider client={new QueryClient()}>
+  <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
+    <WalletProvider autoConnect preferredWallets={['Slush — A Sui wallet', 'Suiet', 'Phantom', ...]}>
+      {children}
+    </WalletProvider>
+  </SuiClientProvider>
+</QueryClientProvider>
+```
+
+## The four hooks you'll use 90% of the time
+
+```tsx
+import {
+  ConnectButton,
+  useActiveAddress,
+  useSuiClient,
+  useSignAndExecuteTransaction,
+} from '@sui-gen/wallet-kit';
+
+export function MyWidget() {
+  const address = useActiveAddress();                              // null when disconnected
+  const client = useSuiClient();                                   // pre-configured for the active network
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
+
+  return (
+    <>
+      <ConnectButton />
+      {address && <p>connected: {address}</p>}
+    </>
+  );
+}
+```
+
+## Sending a transaction from the browser
+
+```tsx
+import { Transaction } from '@mysten/sui/transactions';
+
+async function increment() {
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PKG}::counter::increment`,
+    arguments: [tx.object(counterId)],
+  });
+  const res = await signAndExecute({ transaction: tx });
+  await client.waitForTransaction({ digest: res.digest });
+}
+```
+
+The wallet pops a confirmation prompt, the user approves, the SDK submits the
+signed tx, you wait for confirmation. That's the whole loop.
+
+## Try it
+
+This shared counter is deployed on testnet. Anyone can increment it; you'll see
+the on-chain value tick up immediately after your wallet approves.
+
+<TryCounter />
+
+## Per-wallet differences worth knowing
+
+- **Slush** ships first-party account management — `useAccounts()` enumerates
+  every address the user added, `useSwitchAccount()` switches between them. Use
+  these if your app benefits from multiple identities.
+- **Slush mobile** supports WalletConnect. Pass a `walletConnectProjectId` to the
+  `<WalletProvider>` to enable QR pairing from mobile.
+- **Phantom** historically focused on Solana; their Sui support is recent but
+  Wallet-Standard-compliant. Nothing in your code needs to change.
+
+<Pager slug="slush" />

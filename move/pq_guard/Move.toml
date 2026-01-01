@@ -1,0 +1,13 @@
+[package]
+name = "pq_guard"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+Sui          = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+wots         = { local = "../wots" }
+slh_dsa      = { local = "../slh_dsa" }
+slh_dsa_128s = { local = "../slh_dsa_128s" }
+
+[addresses]
+pq_guard = "0x0"

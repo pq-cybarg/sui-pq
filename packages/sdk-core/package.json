@@ -1,0 +1,53 @@
+{
+  "name": "@sui-gen/sdk-core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./networks": {
+      "types": "./src/networks.ts",
+      "import": "./dist/networks.js",
+      "default": "./dist/networks.js"
+    },
+    "./signers": {
+      "types": "./src/signers.ts",
+      "import": "./dist/signers.js",
+      "default": "./dist/signers.js"
+    },
+    "./tx": {
+      "types": "./src/tx.ts",
+      "import": "./dist/tx.js",
+      "default": "./dist/tx.js"
+    },
+    "./bcs": {
+      "types": "./src/bcs.ts",
+      "import": "./dist/bcs.js",
+      "default": "./dist/bcs.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@mysten/sui": "^1.18.0",
+    "@mysten/bcs": "^1.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}

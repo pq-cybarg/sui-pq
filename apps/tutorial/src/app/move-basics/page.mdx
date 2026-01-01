@@ -1,0 +1,97 @@
+import { Pager } from '@/components/Pager';
+
+# 2. Move basics
+
+Sui's smart-contract language is **Move 2024**. Two ideas matter more than any
+syntax:
+
+1. **Objects are first-class.** Every on-chain "thing" — an NFT, a coin balance,
+   the state of a game — is a typed struct with a unique id. Ownership is part
+   of the type system: an object is *owned by an address*, *shared* (everyone can
+   write), or *frozen* (no one can write).
+2. **Abilities gate behavior.** A struct declares which of `key`, `store`, `copy`,
+   `drop` it has. Want it to live on-chain? Add `key`. Want it stored inside
+   another object? Add `store`. Want it duplicatable? `copy`. Etc.
+
+That's the whole mental model. The rest is plumbing.
+
+## A complete counter module
+
+This is the entirety of the counter we'll publish in the next step.
+
+```move
+module counter::counter;
+
+use sui::event;
+
+public struct Counter has key {
+    id: UID,
+    owner: address,
+    value: u64,
+}
+
+public struct Incremented has copy, drop { counter: ID, value: u64, by: address }
+public struct Reset       has copy, drop { counter: ID, by: address }
+
+const ENotOwner: u64 = 0;
+
+public fun create(ctx: &mut TxContext) {
+    let counter = Counter { id: object::new(ctx), owner: ctx.sender(), value: 0 };
+    transfer::share_object(counter);
+}
+
+public fun increment(c: &mut Counter, ctx: &TxContext) {
+    c.value = c.value + 1;
+    event::emit(Incremented { counter: object::id(c), value: c.value, by: ctx.sender() });
+}
+
+public fun reset(c: &mut Counter, ctx: &TxContext) {
+    assert!(c.owner == ctx.sender(), ENotOwner);
+    c.value = 0;
+    event::emit(Reset { counter: object::id(c), by: ctx.sender() });
+}
+
+public fun value(c: &Counter): u64 { c.value }
+```
+
+### What to notice
+
+- `public struct Counter has key` — `key` means it can live as a top-level on-chain
+  object. The first field must be `id: UID`, allocated via `object::new(ctx)`.
+- `transfer::share_object(counter)` — once shared, *anyone* can call functions on it.
+  This is the right pattern for global state. Alternatives: `transfer::transfer(addr)`
+  (owned by a specific address) and `transfer::freeze_object` (immutable forever).
+- `assert!(condition, ECode)` — the standard pattern for authz checks. The constant
+  shows up in the explorer as `MoveAbort(ECode)`.
+- `event::emit` — indexable, queryable from the client side (we'll see this in the
+  Indexer section).
+
+## Standard patterns in this workspace
+
+The workspace ships six reference Move packages; each one demonstrates a specific
+pattern you'll reach for:
+
+| Package | Pattern |
+| --- | --- |
+| `move/counter` | Shared object + owner-only authz + events |
+| `move/nft` | One-time-witness → Publisher → Display (canonical NFT pattern) |
+| `move/coin` | `coin::create_currency` + `TreasuryCap` (regulated fungible token) |
+| `move/kiosk` | Royalty `TransferPolicy` rule for marketplace flows |
+| `move/seal_demo` | `seal_approve` entry function for threshold-encrypted secrets |
+| `move/deepbook_client` | Calling into DeepBook v3 from a custom module |
+
+You don't need to memorize them; we'll touch each one in context as the tutorial
+progresses.
+
+## Move 2024 gotchas
+
+- **No `public entry`** — in Move 2024, `public` already permits PTB calls.
+  Writing `public entry fun` produces a lint warning.
+- **Constants must be public-ish to be referenced in `#[expected_failure]` attributes.**
+  In tests, use `pkg::module::CONST` or just the literal value.
+- **Vector literals are encouraged over `vector::empty()`** — `vector[]` is the new
+  idiom.
+- **Framework dependency** — pin to `framework/mainnet`, not `framework/main`.
+  The latter follows tip-of-tree and breaks regularly.
+
+<Pager slug="move-basics" />

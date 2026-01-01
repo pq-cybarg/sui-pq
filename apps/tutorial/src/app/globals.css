@@ -1,0 +1,436 @@
+:root {
+  --bg: #0a0d12;
+  --bg-elev: #11161e;
+  --fg: #e8ecf2;
+  --fg-dim: #97a1b0;
+  --muted: #6b7585;
+  --accent: #4da2ff; /* Sui aqua */
+  --accent-soft: rgba(77, 162, 255, 0.12);
+  --warn: #ffb84d;
+  --bad: #ff6b6b;
+  --good: #4ade80;
+  --border: #1d242f;
+  --code-bg: #0d1219;
+  --kbd-bg: #1d242f;
+  --maxw: 740px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+}
+:not(pre) > code {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+
+kbd {
+  background: var(--kbd-bg);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem;
+}
+h2 {
+  font-size: 1.4rem;
+  margin: 2.5rem 0 0.75rem;
+}
+h3 {
+  font-size: 1.1rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+ul,
+ol {
+  padding-left: 1.4rem;
+}
+li {
+  margin: 0.3rem 0;
+}
+
+blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 0.75rem 1rem;
+  border-radius: 0 6px 6px 0;
+  color: var(--fg);
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--bg-elev);
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h1 {
+  font-size: 1.05rem;
+  margin: 0 0 1rem;
+  padding: 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+.sidebar h1 .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+.sidebar nav .nav-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  border-radius: 6px;
+  margin: 0.05rem 0;
+}
+.sidebar nav .nav-row.active {
+  background: var(--accent-soft);
+}
+.sidebar nav .nav-row.active a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.sidebar nav a {
+  flex: 1;
+  display: block;
+  padding: 0.5rem 0.6rem 0.5rem 0;
+  color: var(--fg-dim);
+  font-size: 0.92rem;
+  border-radius: 6px;
+}
+.sidebar nav a:hover {
+  color: var(--fg);
+  text-decoration: none;
+}
+.sidebar nav a .sub {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: normal;
+  margin-top: 0.1rem;
+}
+.sidebar nav .checkbox {
+  flex: 0 0 22px;
+  height: 22px;
+  align-self: center;
+  margin-left: 0.4rem;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  color: var(--good);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+  transition: border-color 120ms, background 120ms;
+}
+.sidebar nav .checkbox:hover {
+  border-color: var(--fg-dim);
+}
+.sidebar nav .checkbox.done {
+  border-color: var(--good);
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.sidebar .clear-progress {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg-dim);
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sidebar .clear-progress:hover:not(:disabled) {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+.sidebar .clear-progress:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Mark-complete button block above the pager */
+.mark-complete {
+  margin: 3rem 0 1rem;
+  text-align: center;
+}
+.mark-complete button {
+  min-width: 280px;
+}
+.sidebar .foot {
+  margin-top: 2rem;
+  padding: 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.main {
+  padding: 3rem 4rem;
+  max-width: calc(var(--maxw) + 8rem);
+}
+.main .content {
+  max-width: var(--maxw);
+  margin: 0 auto;
+}
+
+.muted {
+  color: var(--muted);
+}
+.dim {
+  color: var(--fg-dim);
+}
+
+/* Cards */
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin: 1.25rem 0;
+}
+.card-tight {
+  padding: 0.75rem 1rem;
+}
+
+/* Code blocks */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Command block (shell prompt + copy) */
+.cmd {
+  position: relative;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem 0.75rem 1.6rem;
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+  font-size: 0.88rem;
+  margin: 0.75rem 0;
+}
+.cmd::before {
+  content: "$";
+  position: absolute;
+  left: 0.6rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+.cmd .copy {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.45rem;
+  background: var(--border);
+  color: var(--fg-dim);
+  border: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.cmd .copy:hover {
+  color: var(--fg);
+}
+
+/* Buttons */
+button.primary,
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.ghost {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.92rem;
+}
+button.ghost:hover {
+  background: var(--bg-elev);
+}
+
+/* Pager */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.25rem 0 1rem;
+}
+.pager a {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  padding: 1rem;
+  border-radius: 8px;
+  color: var(--fg);
+}
+.pager a:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.pager a.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.pager .dir {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Mini chip / badge */
+.chip {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.75rem;
+  color: var(--fg-dim);
+  margin-right: 0.4rem;
+}
+.chip.accent {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.chip.warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* Result panel inside Try-It demos */
+.result {
+  margin-top: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--fg-dim);
+}
+.result.ok {
+  border-color: var(--good);
+  color: var(--good);
+}
+.result.bad {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+/* Headline / hero on landing */
+.hero {
+  padding: 4rem 0 2rem;
+  text-align: center;
+}
+.hero h1 {
+  font-size: 3rem;
+  margin: 0;
+}
+.hero p {
+  color: var(--fg-dim);
+  font-size: 1.1rem;
+  margin: 1rem auto;
+  max-width: 540px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 920px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: relative;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .main {
+    padding: 2rem 1.25rem;
+  }
+}

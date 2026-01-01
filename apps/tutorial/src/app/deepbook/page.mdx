@@ -1,0 +1,92 @@
+import { Pager } from '@/components/Pager';
+import { TryDeepBookSnapshot } from '@/components/TryDeepBookSnapshot';
+
+# 9. DeepBook
+
+DeepBook v3 is Sui's first-party central limit orderbook (CLOB), built into the
+framework. It supports limit, market, post-only, and fill-or-kill orders, and —
+critically — every operation is a Move function call, which means other contracts
+can route through it inside the same atomic transaction.
+
+## The two pieces
+
+- **Pool** — a shared object that holds the orderbook for a (base, quote) pair.
+  Pools are permissionless; anyone with the two coin types can create one.
+- **BalanceManager** — your owned object that tracks per-user balances and
+  generates trade-proof tokens. Think of it as a per-app "broker account".
+
+## Quick TS snippet
+
+```ts
+import { Transaction } from '@mysten/sui/transactions';
+import { createDeepBookClient } from '@sui-gen/deepbook';
+
+const db = createDeepBookClient({
+  address: '0xyou...',
+  network: 'mainnet',
+  balanceManagers: {
+    SUI_USDC: { address: '0xyour_bm_id' },
+  },
+});
+
+const tx = new Transaction();
+db.placeLimitOrder({
+  poolKey: 'SUI_USDC',
+  balanceManagerKey: 'SUI_USDC',
+  clientOrderId: '1',
+  price: 2.5,
+  quantity: 100,
+  isBid: true,
+  payWithDeep: false,   // pay maker fee in input coin
+})(tx);
+// ...sign + execute as usual
+```
+
+The `@mysten/deepbook-v3` SDK abstracts the Move call construction — it takes
+human prices like `2.5` and converts to the pool's tick + lot sizes for you.
+
+## Indexer
+
+The Mysten DeepBook indexer is a public service that watches every pool and
+exposes orderbook snapshots, trade history, and pool metadata over REST. Useful
+for charts without running your own indexer:
+
+```ts
+const res = await fetch('https://deepbook-indexer.mainnet.mystenlabs.com/get_order_book/SUI_USDC');
+const { bids, asks, timestamp } = await res.json();
+```
+
+## Try it
+
+<TryDeepBookSnapshot />
+
+## Composability — the real reason it's in the framework
+
+The interesting integrations route *through* DeepBook from inside another
+package. Example: a yield strategy that swaps yield-token → USDC → SUI inside a
+single Move function:
+
+```move
+// inside your strategy module
+public fun swap_yield_to_sui<Y, U>(
+    yield_coin: Coin<Y>,
+    pool_yu: &mut Pool<Y, U>,
+    pool_us: &mut Pool<U, SUI>,
+    ctx: &mut TxContext,
+): Coin<SUI> {
+    let usdc = pool::swap_exact_amount(pool_yu, yield_coin, /* min_out */ 0, ctx);
+    pool::swap_exact_amount(pool_us, usdc, /* min_out */ 0, ctx)
+}
+```
+
+That's two on-chain swaps inside one atomic call — no slippage between hops, no
+external relayer, no MEV bot front-running between the legs.
+
+## Where to look next
+
+- **`@mysten/deepbook-v3`** on npm — full Move-call helpers and pool registry.
+- **DeepBook docs**: [docs.sui.io/standards/deepbookv3 ↗](https://docs.sui.io/standards/deepbookv3)
+- **`move/deepbook_client`** in this workspace — scaffolding for the in-package
+  routing pattern above.
+
+<Pager slug="deepbook" />

@@ -1,0 +1,11 @@
+[package]
+name = "slh_dsa"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+Sui  = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+wots = { local = "../wots" }
+
+[addresses]
+slh_dsa = "0x0"

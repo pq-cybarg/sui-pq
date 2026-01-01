@@ -1,0 +1,113 @@
+import { Pager } from '@/components/Pager';
+
+# 7. Seal secrets
+
+Seal is Mysten Labs' decentralized secrets-management protocol. Data is encrypted
+to an arbitrary **identity** (byte string) and released only when a quorum of
+independently-operated **key servers** can verify that a user-specified Move
+function `seal_approve(id, …)` doesn't abort.
+
+The neat insight: Seal pushes the access-control policy on-chain (it's just a
+Move function), and the key servers act as policy *enforcers* without ever
+seeing the plaintext.
+
+## Flow at a glance
+
+```
+  ┌───────────┐  ciphertext   ┌────────────────┐
+  │  Encrypt  ├──────────────►│ Store anywhere │  (Walrus, IPFS, S3)
+  └───────────┘               └────────────────┘
+
+  ┌───────────┐  SessionKey + tx-bytes   ┌──────────────────┐
+  │  Decrypt  ├─────────────────────────►│ Seal key servers │ × N
+  │  client   │                           │ run seal_approve │
+  └───────────┘ ◄─── ≥ threshold shares ──└──────────────────┘
+        │
+        ▼
+    plaintext
+```
+
+## On-chain side
+
+You write a Move package whose `seal_approve` entry function does whatever access
+check makes sense for your app. The workspace's example: an allowlist.
+
+```move
+module seal_demo::allowlist;
+
+public struct Allowlist has key {
+    id: UID,
+    owner: address,
+    members: vector<address>,
+}
+
+const ENotAllowed: u64 = 0;
+
+entry fun seal_approve(id: vector<u8>, al: &Allowlist, ctx: &TxContext) {
+    let _ = id; // shape-check; id namespace is enforced elsewhere
+    assert!(vector::contains(&al.members, &ctx.sender()), ENotAllowed);
+}
+```
+
+Key servers call `seal_approve(id, allowlist_obj, ctx)` in a dry-run; if it
+aborts (caller not on the list), the key server refuses to release its share.
+If `threshold` shares are released, the SDK combines them locally and decrypts.
+
+## TypeScript side
+
+```ts
+import { createSealClient, makeIdentity, SessionKey } from '@sui-gen/seal-client';
+import { Transaction } from '@mysten/sui/transactions';
+
+const seal = createSealClient({ network: 'testnet' });
+
+// Build the identity: package id + your app's namespace bytes
+const id = makeIdentity(packageId, /* namespace */ allowlistId);
+
+// Encrypt
+const ciphertext = await seal.encrypt({
+  threshold: 2,
+  packageId,
+  id,
+  data: new TextEncoder().encode('secret payload'),
+});
+
+// Decrypt — user signs a one-time session key
+const sessionKey = await SessionKey.create({ address, packageId, ttlMin: 10, suiClient });
+await sessionKey.setPersonalMessageSignature(/* wallet sig */);
+
+// Build the seal_approve tx-bytes (NOT executed, just shape)
+const tx = new Transaction();
+tx.moveCall({
+  target: `${packageId}::allowlist::seal_approve`,
+  arguments: [tx.pure.vector('u8', id), tx.object(allowlistId)],
+});
+const txBytes = await tx.build({ client: suiClient, onlyTransactionKind: true });
+
+const plaintext = await seal.decrypt({ data: ciphertext, sessionKey, txBytes });
+```
+
+## What changes with the threshold
+
+`threshold: 2` means at least 2 key servers must agree. The workspace defaults
+to 2 of the 2 Mysten-run testnet servers; mainnet adds independent operators.
+Higher threshold = stronger censorship resistance, lower availability.
+
+## Identity discipline
+
+**Always include the namespace** (allowlist id, file hash, whatever scopes
+access) in the identity bytes. Otherwise a key server might release the key
+for a *different* object that happens to share your `seal_approve` signature.
+`makeIdentity(pkg, namespace)` does this for you — `id = packageBytes || namespace`.
+
+## Use cases
+
+- **Token-gated content** — anyone holding NFT X can decrypt
+- **Time-locked reveals** — `seal_approve` checks `current_epoch >= unlock_epoch`
+- **Multi-party encryption** — n-of-m threshold via the allowlist count
+- **Marketplace previews** — buyer must own the purchase receipt to decrypt the full asset
+
+Seal pairs naturally with Walrus: put the ciphertext on Walrus, gate decryption
+on Sui. That's the canonical pattern for "decentralized private data".
+
+<Pager slug="seal" />

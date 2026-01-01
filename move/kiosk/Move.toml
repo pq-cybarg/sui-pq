@@ -1,0 +1,11 @@
+[package]
+name = "marketplace_kiosk"
+edition = "2024.beta"
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet" }
+Kiosk = { git = "https://github.com/MystenLabs/apps.git", subdir = "kiosk", rev = "main" }
+
+[addresses]
+marketplace_kiosk = "0x0"

@@ -1,0 +1,74 @@
+import { Cmd } from '@/components/Cmd';
+import { Pager } from '@/components/Pager';
+import { TryBalance } from '@/components/TryBalance';
+
+# 1. Setup
+
+You need three things to develop on Sui: the **Sui CLI** (to talk to the chain
+and compile Move), the **Walrus CLI** (optional but extremely useful for blob
+storage debugging), and a **wallet** that supports the Wallet Standard.
+
+## Install the Sui CLI
+
+The recommended path is `suiup` — Mysten Labs' version manager. It handles
+multiple Sui versions side-by-side and matches your network release.
+
+<Cmd>{`cargo install --locked --git https://github.com/MystenLabs/suiup.git`}</Cmd>
+
+Then install and pin the mainnet binary (works on every network):
+
+<Cmd>{`suiup install sui@mainnet && suiup default set sui@mainnet`}</Cmd>
+
+The binary lands at `~/.local/bin/sui`. Confirm:
+
+<Cmd>{`sui --version`}</Cmd>
+
+If you'd rather skip cargo: prebuilt binaries are at
+[github.com/MystenLabs/sui/releases](https://github.com/MystenLabs/sui/releases).
+
+## Install Walrus
+
+<Cmd>{`curl -fsSL https://storage.googleapis.com/mysten-walrus-binaries/walrus-testnet-latest-macos-arm64 -o ~/.local/bin/walrus && chmod +x ~/.local/bin/walrus`}</Cmd>
+
+(Replace `macos-arm64` with your platform: `macos-x86_64`, `ubuntu-x86_64`,
+`ubuntu-aarch64`.)
+
+## Configure for testnet
+
+<Cmd>{`sui client new-env --alias testnet --rpc https://fullnode.testnet.sui.io:443`}</Cmd>
+
+<Cmd>{`sui client switch --env testnet`}</Cmd>
+
+First call creates a fresh keypair. **Sui will print a 12-word recovery phrase
+once** — save it somewhere if you ever want this address back; otherwise treat
+it as a throwaway dev key.
+
+## Get test gas
+
+The public faucet is rate-limited; the Discord faucet bot is reliable when the
+HTTP one is busy.
+
+<Cmd>{`curl --location --request POST 'https://faucet.testnet.sui.io/v2/gas' \\
+  --header 'Content-Type: application/json' \\
+  --data-raw "{\\"FixedAmountRequest\\": {\\"recipient\\": \\"$(sui client active-address)\\"}}"`}</Cmd>
+
+## Try it
+
+If you've got a wallet connected and any testnet SUI in it, this read works
+without any setup on your machine — it queries the public testnet RPC.
+
+<TryBalance />
+
+## Install a wallet
+
+For the demos in later sections you'll want an actual wallet extension. Slush
+(Mysten Labs' first-party wallet, formerly "Sui Wallet") is recommended:
+
+- **Slush**: [chrome web store ↗](https://chrome.google.com/webstore/detail/slush-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil)
+- **Suiet**: [chromewebstore.google.com ↗](https://chromewebstore.google.com/detail/suiet-sui-wallet/khpkpbbcccdmmclmpigdgddabeilkdpd)
+- **Phantom**: [chromewebstore.google.com ↗](https://chromewebstore.google.com/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa)
+
+All three implement the Wallet Standard, so a dApp using `@mysten/dapp-kit`
+detects any of them automatically.
+
+<Pager slug="setup" />

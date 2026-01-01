@@ -1,0 +1,44 @@
+{
+  "name": "@sui-gen/walrus-client",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./http": {
+      "types": "./src/http-client.ts",
+      "import": "./dist/http-client.js",
+      "default": "./dist/http-client.js"
+    },
+    "./config": {
+      "types": "./src/config.ts",
+      "import": "./dist/config.js",
+      "default": "./dist/config.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@mysten/sui": "^1.18.0",
+    "@mysten/walrus": "^0.6.0",
+    "@sui-gen/sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  }
+}
