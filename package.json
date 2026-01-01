@@ -51,7 +51,8 @@
     "demo:pq-mnemonic": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-mnemonic.ts",
     "demo:pq-ecosystem": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-ecosystem.ts",
     "demo:pq-deepbook": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-deepbook.ts",
-    "demo:pq-services": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-services.ts"
+    "demo:pq-services": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-services.ts",
+    "demo:pq-seal": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-seal.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
