@@ -16,15 +16,35 @@ import { spawn } from 'node:child_process';
  * holds. The residual trust is in Lean's compiler — see the README's
  * "Verified extraction" section for the honest assessment.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const katExe = resolve(__dirname, '../../../proofs/.lake/build/bin/kat');
 
-const prompt = JSON.parse(readFileSync('/tmp/slhdsa-prompt.json', 'utf-8'));
-const expected = JSON.parse(readFileSync('/tmp/slhdsa-expected.json', 'utf-8'));
+// The full NIST ACVP prompt set (~30MB) is fetched out-of-band from
+// usnistgov/ACVP-Server; override the locations with SLHDSA_PROMPT /
+// SLHDSA_EXPECTED if you keep them elsewhere.
+const promptPath = process.env.SLHDSA_PROMPT ?? '/tmp/slhdsa-prompt.json';
+const expectedPath = process.env.SLHDSA_EXPECTED ?? '/tmp/slhdsa-expected.json';
+
+// This is a *supplementary* extraction-fidelity check over the full ACVP set.
+// The authoritative NIST equivalence is the `nist_*` `native_decide` theorems
+// in `Fips205/NistKat.lean`, already verified by `lake build`. When the ACVP
+// JSON isn't present (e.g. CI, fresh checkout) skip rather than fail — the
+// proof, not this cross-check, is the gate.
+if (!existsSync(promptPath) || !existsSync(expectedPath)) {
+  console.warn(
+    `[nist-exe] skipping: ${promptPath} / ${expectedPath} not found.\n` +
+      '[nist-exe] (the NIST equivalence is machine-checked in Fips205/NistKat.lean;\n' +
+      '[nist-exe]  fetch the ACVP vectors and set SLHDSA_PROMPT/SLHDSA_EXPECTED to run this cross-check.)',
+  );
+  process.exit(0);
+}
+
+const prompt = JSON.parse(readFileSync(promptPath, 'utf-8'));
+const expected = JSON.parse(readFileSync(expectedPath, 'utf-8'));
 
 interface PromptGroup {
   tgId: number;
