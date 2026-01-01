@@ -42,7 +42,7 @@ function det(label: string, len: number): Uint8Array {
 
 async function main(): Promise<void> {
   const c = client();
-  console.log(`\nPQ-only account — no elliptic curve anywhere — @ 127.0.0.1:9000\n`);
+  console.log('\nPQ-only account — no elliptic curve anywhere — @ 127.0.0.1:9000\n');
 
   // 1. PQ keypair. Note: nothing here imports an Ed25519/secp keypair.
   const { pk, sk } = slh.keygen(det('pq-only-account:seed', 32), det('pq-only-account:sk', 32));
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   const address = slhDsaAddress(pk);
   console.log(`  PQ public key : seed ${pk.seed.length}B + root ${pk.root.length}B (SLH-DSA-LITE)`);
   console.log(`  Sui address   : ${address}`);
-  console.log(`                  = blake2b256(0x07 || PK.seed || PK.root) — no EC key exists\n`);
+  console.log('                  = blake2b256(0x07 || PK.seed || PK.root) — no EC key exists\n');
 
   // 3. Fund the PQ-derived address from the localnet faucet.
   const res = await fetch(`${LOCALNET_FAUCET}/v2/gas`, {
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
   console.log(
     `  signature     : ${sigBlob.length}B blob, flag byte 0x${sigBlob[0]?.toString(16)} (SLH-DSA-LITE)`,
   );
-  console.log(`                  contains ZERO Ed25519/secp256* bytes — purely post-quantum\n`);
+  console.log('                  contains ZERO Ed25519/secp256* bytes — purely post-quantum\n');
 
   // 6. Verify locally against the exact intent digest a validator would check.
   const verified = verifyTxSlhDsaSig(txBytes, sigBlob);
