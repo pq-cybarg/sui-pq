@@ -16,32 +16,22 @@ import { spawn } from 'node:child_process';
  * holds. The residual trust is in Lean's compiler — see the README's
  * "Verified extraction" section for the honest assessment.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const katExe = resolve(__dirname, '../../../proofs/.lake/build/bin/kat');
 
-// The full NIST ACVP prompt set (~30MB) is fetched out-of-band from
-// usnistgov/ACVP-Server; override the locations with SLHDSA_PROMPT /
-// SLHDSA_EXPECTED if you keep them elsewhere.
-const promptPath = process.env.SLHDSA_PROMPT ?? '/tmp/slhdsa-prompt.json';
-const expectedPath = process.env.SLHDSA_EXPECTED ?? '/tmp/slhdsa-expected.json';
-
-// This is a *supplementary* extraction-fidelity check over the full ACVP set.
-// The authoritative NIST equivalence is the `nist_*` `native_decide` theorems
-// in `Fips205/NistKat.lean`, already verified by `lake build`. When the ACVP
-// JSON isn't present (e.g. CI, fresh checkout) skip rather than fail — the
-// proof, not this cross-check, is the gate.
-if (!existsSync(promptPath) || !existsSync(expectedPath)) {
-  console.warn(
-    `[nist-exe] skipping: ${promptPath} / ${expectedPath} not found.
-[nist-exe] (the NIST equivalence is machine-checked in Fips205/NistKat.lean;
-[nist-exe]  fetch the ACVP vectors and set SLHDSA_PROMPT/SLHDSA_EXPECTED to run this cross-check.)`,
-  );
-  process.exit(0);
-}
+// The SLH-DSA-SHA2-128s/external/pure ACVP group (14 official NIST vectors,
+// extracted from usnistgov/ACVP-Server) is vendored in the repo so this check
+// runs hermetically — in CI and from a fresh checkout — with no out-of-band
+// download. Override with SLHDSA_PROMPT / SLHDSA_EXPECTED to point at the full
+// ACVP set if you prefer. Missing files are a hard error: this test runs.
+const vectorsDir = resolve(__dirname, '../../../test-vectors/nist-acvp');
+const promptPath = process.env.SLHDSA_PROMPT ?? resolve(vectorsDir, 'slhdsa-sha2-128s-prompt.json');
+const expectedPath =
+  process.env.SLHDSA_EXPECTED ?? resolve(vectorsDir, 'slhdsa-sha2-128s-expected.json');
 
 const prompt = JSON.parse(readFileSync(promptPath, 'utf-8'));
 const expected = JSON.parse(readFileSync(expectedPath, 'utf-8'));

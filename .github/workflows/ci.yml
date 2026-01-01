@@ -80,7 +80,11 @@ jobs:
         if: steps.cache-elan.outputs.cache-hit != 'true'
         run: |
           curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      # Must run unconditionally — on a cache hit the install step above is
+      # skipped, but ~/.elan/bin still needs to be on PATH for `lake`.
+      - name: Put elan on PATH
+        run: echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - run: pnpm install --frozen-lockfile
 

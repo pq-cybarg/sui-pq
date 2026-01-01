@@ -8,6 +8,7 @@
       "**/.next/**",
       "**/node_modules/**",
       "**/move/**/build/**",
+      "test-vectors/**",
       "pnpm-lock.yaml"
     ]
   },

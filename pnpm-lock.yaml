@@ -121,6 +121,9 @@ importers:
       '@mysten/sui':
         specifier: 1.45.2
         version: 1.45.2(typescript@5.9.3)
+      '@noble/hashes':
+        specifier: ^1.5.0
+        version: 1.8.0
       '@sui-gen/deepbook':
         specifier: workspace:*
         version: link:../../packages/deepbook

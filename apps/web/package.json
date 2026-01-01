@@ -14,6 +14,7 @@
   "dependencies": {
     "@mysten/dapp-kit": "^0.16.0",
     "@mysten/sui": "^1.18.0",
+    "@noble/hashes": "^1.5.0",
     "@sui-gen/deepbook": "workspace:*",
     "@sui-gen/lumiwave": "workspace:*",
     "@sui-gen/pqc": "workspace:*",
