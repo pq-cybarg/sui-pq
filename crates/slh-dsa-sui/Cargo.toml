@@ -1,0 +1,12 @@
+[package]
+name = "slh-dsa-sui"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Verify-only FIPS-205 SLH-DSA-SHA2-128s wrapper (RustCrypto slh-dsa) for a native Sui PQ SignatureScheme. Interoperates byte-for-byte with @sui-gen/pqc's noble signer."
+
+[dependencies]
+slh-dsa = "0.2.0-rc.5"
+
+[dev-dependencies]
+hex = "0.4"
