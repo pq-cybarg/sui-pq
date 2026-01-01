@@ -82,6 +82,33 @@ so they can't be *executed* on a bare localnet, but the post-quantum
 verified. zkLogin is classical by construction; PQ co-signing of a zkLogin tx is
 provided by `@sui-gen/pqc`'s `pqWrapZkLoginTx`.
 
+## Real upstream protocols, run locally (`pnpm demo:pq-deepbook`)
+
+The `BUILD+SIGN` row above is the honest floor, not the ceiling. Where an
+upstream protocol is **pure on-chain Move**, we can do better than sign a
+representative tx — we can publish the *real* upstream packages to the localnet
+and drive them for real. **DeepBook v3** is proven this way:
+
+```bash
+bash demos/localnet-pq/setup-deepbook.sh   # clone MystenLabs/deepbookv3, unpin for localnet
+pnpm demo:pq-deepbook
+```
+
+`pq-deepbook.ts` publishes the **actual upstream** `deepbookv3` (`token` +
+`deepbook`) to the local validator, then — signed only by an SLH-DSA key —
+admin-creates a real `Pool<DEMO,SUI>`, opens a real `BalanceManager`, funds it,
+and **places a real limit order on DeepBook's CLOB** (`OrderPlaced` emitted). No
+mock: this is Mysten's production DeepBook code, republished locally (the
+mainnet-pinned package ids are unpinned so it deploys fresh), executing a real
+trade authorized by a post-quantum account.
+
+The same recipe (republish the real Move packages, drive with the PQ signer)
+extends to any pure-on-chain protocol. The remaining `BUILD+SIGN` packages need
+an off-chain counterparty — Walrus storage nodes, Seal key servers, a Wormhole
+guardian for Pyth/bridge, a zkLogin prover — or, for the Sui Bridge (`0xb`,
+genesis-reserved) and Lumiwave (closed-source coin), can't be republished at
+all; those would each require standing up the upstream service locally.
+
 ## Design notes
 
 - `lib.ts` — localnet client, the active CLI keypair (holds publish caps + gas),
