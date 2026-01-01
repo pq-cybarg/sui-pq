@@ -49,31 +49,38 @@ is a post-quantum signature checked inside Move. The validator's classical
 signature only pays gas — the actual authorization is quantum-resistant, with
 no validator-side change.
 
-## The off-Sui technologies
+## Every ecosystem package, post-quantum (`pnpm demo:pq-ecosystem`)
 
-The workspace also ships clients for technologies that are **separate
-decentralized networks**, not things a bare Sui localnet provides: Walrus
-(storage nodes), Seal (key servers), zkLogin (OAuth + prover), DeepBook
-(deployed pools + indexer), Pyth oracles (state objects + Hermes), the bridge
-(Wormhole guardians), and Lumiwave (its own RPC + deployed LWA coin).
+`pq-ecosystem.ts` proves that **all 13 `@sui-gen/*` packages** work when their
+on-chain operations are driven by an **SLH-DSA-only account** (scheme `0x07`, no
+elliptic curve) on the patched validator. The linchpin is
+[`pq-signer.ts`](./pq-signer.ts)'s `SlhDsaSigner` — a drop-in `@mysten/sui`
+`Signer` backed by a post-quantum key, so anything that takes a signer
+(`sdk-core`'s `executeTx`, `@mysten/kiosk`, sponsored-tx, the dapp-kit wallet
+hooks…) accepts it unchanged.
 
-On a **bare** Sui localnet these have no service to talk to, so they are not in
-the 8 end-to-end scenarios above. What *is* verified for them today:
+Public testnets do **not** have the PQ scheme (it's a local validator patch), so
+the off-Sui services are exercised against **local mocks/stand-ins** (an
+in-process Walrus publisher/aggregator; a locally-published LWA stand-in coin for
+Lumiwave; `seal_demo`'s on-chain allowlist gate for Seal). Status per package:
 
-- **Unit tests** (`pnpm test`) exercise their client logic offline (request
-  construction, encoding, PQ envelopes) — see each package's `*.test.ts`.
-- They are **localnet-configurable**: every client reads `SUI_NETWORK` /
-  `*_RPC_URL` / endpoint env vars and points at `127.0.0.1` when asked.
-- The **post-quantum layer is transport-independent**: `@sui-gen/pqc` signs and
-  attests payloads the same way regardless of which network carries them, and
-  on-chain PQ attestations (`pq_attestation`) anchor any off-chain artifact
-  (e.g. a Walrus blob id) to the Sui localnet.
+| Status | Packages | What's proven |
+| --- | --- | --- |
+| **EXECUTED** (PQ-only on-chain) | `pqc`, `sdk-core`, `sponsored-tx`, `indexer`, `kiosk` | a real PQ-signed transaction executed on-chain via the package |
+| **LOCAL** (stand-in round-trip) | `lumiwave`, `walrus-client` | end-to-end against a local mock/stand-in |
+| **GATE** (PQ-only on-chain) | `seal-client` | the `seal_approve` allowlist gate ran under a PQ account |
+| **BUILD+SIGN** (external infra) | `wallet-kit`, `zk-login`, `oracles`, `deepbook`, `bridge` | the package builds its tx and the PQ signer produces a valid native signature; on-chain execution needs an external protocol (mainnet pools / bridge / oracle / prover / browser wallet) absent on a local node |
 
-A fully-local end-to-end demo for these requires standing up `127.0.0.1`
-stand-in services that speak each protocol (a local Walrus publisher/aggregator,
-a local Seal key server, a local prover, a local Hermes price feed, a local
-guardian). That stand-in tier is the natural next addition to this harness; the
-PQ-secured client code it would drive already exists and is unit-tested.
+`sponsored-tx` is notable: a **PQ user authorizes** while a classical Ed25519
+**sponsor pays gas** — a post-quantum account that holds no SUI still transacts.
+
+The `BUILD+SIGN` packages target protocols that only exist on mainnet (DeepBook
+v3 pools, Sui Bridge `0xb` + Wormhole guardians, Pyth Hermes + on-chain state)
+or in the browser (dapp-kit wallets) or off-chain (zkLogin's Groth16 prover) —
+so they can't be *executed* on a bare localnet, but the post-quantum
+*integration point* (their unsigned `Transaction` is signed by the PQ signer) is
+verified. zkLogin is classical by construction; PQ co-signing of a zkLogin tx is
+provided by `@sui-gen/pqc`'s `pqWrapZkLoginTx`.
 
 ## Design notes
 

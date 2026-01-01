@@ -48,7 +48,8 @@
     "servers:status": "bash scripts/server.sh all status",
     "demo:pq-native": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-only-native.ts",
     "demo:pq-exhaustive": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-exhaustive.ts",
-    "demo:pq-mnemonic": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-mnemonic.ts"
+    "demo:pq-mnemonic": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-mnemonic.ts",
+    "demo:pq-ecosystem": "SUI_NETWORK=localnet tsx demos/localnet-pq/pq-ecosystem.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
