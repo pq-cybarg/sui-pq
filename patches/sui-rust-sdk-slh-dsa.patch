@@ -1,0 +1,188 @@
+diff --git a/crates/sui-sdk-types/src/crypto/mod.rs b/crates/sui-sdk-types/src/crypto/mod.rs
+index f233a70..a714504 100644
+--- a/crates/sui-sdk-types/src/crypto/mod.rs
++++ b/crates/sui-sdk-types/src/crypto/mod.rs
+@@ -30,6 +30,7 @@ pub use secp256r1::Secp256r1PublicKey;
+ pub use secp256r1::Secp256r1Signature;
+ pub use signature::SignatureScheme;
+ pub use signature::SimpleSignature;
++pub use signature::SlhDsaAuthenticator;
+ pub use signature::UserSignature;
+ pub use validator::ValidatorAggregatedSignature;
+ pub use validator::ValidatorCommittee;
+diff --git a/crates/sui-sdk-types/src/crypto/multisig.rs b/crates/sui-sdk-types/src/crypto/multisig.rs
+index ee8f300..ad1cd9a 100644
+--- a/crates/sui-sdk-types/src/crypto/multisig.rs
++++ b/crates/sui-sdk-types/src/crypto/multisig.rs
+@@ -430,7 +430,8 @@ mod serialization {
+                 SignatureScheme::Multisig
+                 | SignatureScheme::Bls12381
+                 | SignatureScheme::ZkLogin
+-                | SignatureScheme::Passkey => {
++                | SignatureScheme::Passkey
++                | SignatureScheme::SlhDsa => {
+                     Err(serde::de::Error::custom("invalid public key type"))
+                 }
+             }
+diff --git a/crates/sui-sdk-types/src/crypto/signature.rs b/crates/sui-sdk-types/src/crypto/signature.rs
+index 2f41707..1e0138d 100644
+--- a/crates/sui-sdk-types/src/crypto/signature.rs
++++ b/crates/sui-sdk-types/src/crypto/signature.rs
+@@ -160,11 +160,30 @@ impl SimpleSignature {
+             SignatureScheme::Multisig
+             | SignatureScheme::Bls12381
+             | SignatureScheme::ZkLogin
+-            | SignatureScheme::Passkey => Err(serde::de::Error::custom("invalid signature scheme")),
++            | SignatureScheme::Passkey
++            | SignatureScheme::SlhDsa => {
++                Err(serde::de::Error::custom("invalid signature scheme"))
++            }
+         }
+     }
+ }
+ 
++/// FIPS-205 SLH-DSA-SHA2-128s public-key length (`PK.seed ‖ PK.root`).
++pub const SLH_DSA_PUBLIC_KEY_LENGTH: usize = 32;
++/// FIPS-205 SLH-DSA-SHA2-128s signature length.
++pub const SLH_DSA_SIGNATURE_LENGTH: usize = 7856;
++
++/// A native post-quantum FIPS-205 SLH-DSA-SHA2-128s authenticator: a raw
++/// `(public_key, signature)` pair verified over the standard signing digest.
++///
++/// Used only by the local post-quantum validator fork (scheme flag `0x07`).
++/// The signature is boxed to keep [UserSignature] small on the stack.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub struct SlhDsaAuthenticator {
++    pub public_key: [u8; SLH_DSA_PUBLIC_KEY_LENGTH],
++    pub signature: Box<[u8; SLH_DSA_SIGNATURE_LENGTH]>,
++}
++
+ #[cfg(feature = "serde")]
+ #[cfg_attr(doc_cfg, doc(cfg(feature = "serde")))]
+ impl serde::Serialize for SimpleSignature {
+@@ -342,6 +361,8 @@ pub enum SignatureScheme {
+     Bls12381 = 0x04, // This is currently not supported for user addresses
+     ZkLogin = 0x05,
+     Passkey = 0x06,
++    /// FIPS-205 SLH-DSA-SHA2-128s (post-quantum). Local PQ validator fork only.
++    SlhDsa = 0x07,
+ }
+ 
+ impl SignatureScheme {
+@@ -355,6 +376,7 @@ impl SignatureScheme {
+             SignatureScheme::Bls12381 => "bls12381",
+             SignatureScheme::ZkLogin => "zklogin",
+             SignatureScheme::Passkey => "passkey",
++            SignatureScheme::SlhDsa => "slhdsa",
+         }
+     }
+ 
+@@ -368,6 +390,7 @@ impl SignatureScheme {
+             0x04 => Ok(Self::Bls12381),
+             0x05 => Ok(Self::ZkLogin),
+             0x06 => Ok(Self::Passkey),
++            0x07 => Ok(Self::SlhDsa),
+             invalid => Err(InvalidSignatureScheme(invalid)),
+         }
+     }
+@@ -448,6 +471,8 @@ pub enum UserSignature {
+     Multisig(MultisigAggregatedSignature),
+     ZkLogin(Box<ZkLoginAuthenticator>),
+     Passkey(PasskeyAuthenticator),
++    /// FIPS-205 SLH-DSA-SHA2-128s (post-quantum). Local PQ validator fork only.
++    SlhDsa(SlhDsaAuthenticator),
+ }
+ 
+ impl UserSignature {
+@@ -458,6 +483,7 @@ impl UserSignature {
+             UserSignature::Multisig(_) => SignatureScheme::Multisig,
+             UserSignature::ZkLogin(_) => SignatureScheme::ZkLogin,
+             UserSignature::Passkey(_) => SignatureScheme::Passkey,
++            UserSignature::SlhDsa(_) => SignatureScheme::SlhDsa,
+         }
+     }
+ }
+@@ -474,6 +500,15 @@ mod serialization {
+                 UserSignature::Multisig(m) => m.to_bytes(),
+                 UserSignature::ZkLogin(z) => z.to_bytes(),
+                 UserSignature::Passkey(p) => p.to_bytes(),
++                UserSignature::SlhDsa(s) => {
++                    // flag(0x07) ‖ public_key(32) ‖ signature(7856)
++                    let mut buf =
++                        Vec::with_capacity(1 + SLH_DSA_PUBLIC_KEY_LENGTH + SLH_DSA_SIGNATURE_LENGTH);
++                    buf.push(SignatureScheme::SlhDsa as u8);
++                    buf.extend_from_slice(&s.public_key);
++                    buf.extend_from_slice(s.signature.as_ref());
++                    buf
++                }
+             }
+         }
+ 
+@@ -514,6 +549,20 @@ mod serialization {
+                     let passkey = PasskeyAuthenticator::from_serialized_bytes(bytes)?;
+                     Ok(Self::Passkey(passkey))
+                 }
++                SignatureScheme::SlhDsa => {
++                    let expected = 1 + SLH_DSA_PUBLIC_KEY_LENGTH + SLH_DSA_SIGNATURE_LENGTH;
++                    if bytes.len() != expected {
++                        return Err(serde::de::Error::custom("invalid slh-dsa signature"));
++                    }
++                    let mut public_key = [0u8; SLH_DSA_PUBLIC_KEY_LENGTH];
++                    public_key.copy_from_slice(&bytes[1..(1 + SLH_DSA_PUBLIC_KEY_LENGTH)]);
++                    let mut signature = Box::new([0u8; SLH_DSA_SIGNATURE_LENGTH]);
++                    signature.copy_from_slice(&bytes[(1 + SLH_DSA_PUBLIC_KEY_LENGTH)..]);
++                    Ok(Self::SlhDsa(SlhDsaAuthenticator {
++                        public_key,
++                        signature,
++                    }))
++                }
+             }
+         }
+ 
+@@ -577,6 +626,11 @@ mod serialization {
+             S: serde::Serializer,
+         {
+             if serializer.is_human_readable() {
++                // SLH-DSA has no structured readable form; emit the base64 blob,
++                // which the deserializer accepts via the base64-string path.
++                if let UserSignature::SlhDsa(_) = self {
++                    return serializer.serialize_str(&self.to_base64());
++                }
+                 let readable = match self {
+                     UserSignature::Simple(SimpleSignature::Ed25519 {
+                         signature,
+@@ -604,6 +658,8 @@ mod serialization {
+                     }
+                     UserSignature::ZkLogin(zklogin) => ReadableUserSignatureRef::ZkLogin(zklogin),
+                     UserSignature::Passkey(passkey) => ReadableUserSignatureRef::Passkey(passkey),
++                    // Handled above via the base64-string path.
++                    UserSignature::SlhDsa(_) => unreachable!(),
+                 };
+                 readable.serialize(serializer)
+             } else {
+@@ -612,6 +668,7 @@ mod serialization {
+                     UserSignature::Multisig(multisig) => multisig.serialize(serializer),
+                     UserSignature::ZkLogin(zklogin) => zklogin.serialize(serializer),
+                     UserSignature::Passkey(passkey) => passkey.serialize(serializer),
++                    UserSignature::SlhDsa(_) => serializer.serialize_bytes(&self.to_bytes()),
+                 }
+             }
+         }
+diff --git a/crates/sui-sdk-types/src/hash.rs b/crates/sui-sdk-types/src/hash.rs
+index 4826b2b..1e8ce06 100644
+--- a/crates/sui-sdk-types/src/hash.rs
++++ b/crates/sui-sdk-types/src/hash.rs
+@@ -337,6 +337,13 @@ impl crate::UserSignature {
+             crate::UserSignature::Passkey(passkey) => {
+                 DerivedAddressIter::new(passkey.derive_address())
+             }
++            crate::UserSignature::SlhDsa(s) => {
++                // Address = blake2b256(0x07 ‖ public_key), matching the node.
++                let mut hasher = Hasher::new();
++                hasher.update([crate::SignatureScheme::SlhDsa.to_u8()]);
++                hasher.update(s.public_key);
++                DerivedAddressIter::new(Address::new(hasher.finalize().into_inner()))
++            }
+         }
+     }
+ }

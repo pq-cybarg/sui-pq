@@ -1,5 +1,5 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index f6181b81..bc9d8fd5 100644
+index f6181b81..c851d0b2 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -50,7 +50,7 @@ version = "0.5.1"
@@ -482,7 +482,31 @@ index f6181b81..bc9d8fd5 100644
  [[package]]
  name = "stable_deref_trait"
  version = "1.2.0"
-@@ -17029,7 +17186,7 @@ dependencies = [
+@@ -14551,7 +14708,6 @@ dependencies = [
+ [[package]]
+ name = "sui-crypto"
+ version = "0.3.0"
+-source = "git+https://github.com/MystenLabs/sui-rust-sdk.git?rev=e494a36a76a0aab8c5d66d5557995faee5c1fb09#e494a36a76a0aab8c5d66d5557995faee5c1fb09"
+ dependencies = [
+  "ark-bn254",
+  "ark-ff 0.4.2",
+@@ -16473,7 +16629,6 @@ dependencies = [
+ [[package]]
+ name = "sui-rpc"
+ version = "0.3.0"
+-source = "git+https://github.com/MystenLabs/sui-rust-sdk.git?rev=e494a36a76a0aab8c5d66d5557995faee5c1fb09#e494a36a76a0aab8c5d66d5557995faee5c1fb09"
+ dependencies = [
+  "base64 0.22.1",
+  "bcs",
+@@ -16660,7 +16815,6 @@ dependencies = [
+ [[package]]
+ name = "sui-sdk-types"
+ version = "0.3.0"
+-source = "git+https://github.com/MystenLabs/sui-rust-sdk.git?rev=e494a36a76a0aab8c5d66d5557995faee5c1fb09#e494a36a76a0aab8c5d66d5557995faee5c1fb09"
+ dependencies = [
+  "base64ct",
+  "bcs",
+@@ -17029,7 +17183,7 @@ dependencies = [
   "axum-server",
   "ed25519",
   "fastcrypto",
@@ -491,7 +515,7 @@ index f6181b81..bc9d8fd5 100644
   "rand 0.8.5",
   "rcgen",
   "reqwest",
-@@ -17236,6 +17393,7 @@ dependencies = [
+@@ -17236,6 +17390,7 @@ dependencies = [
   "serde_yaml 0.8.26",
   "shared-crypto",
   "signature 1.6.4",
@@ -499,7 +523,7 @@ index f6181b81..bc9d8fd5 100644
   "static_assertions",
   "strum 0.27.1",
   "strum_macros 0.27.1",
-@@ -17988,7 +18146,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -17988,7 +18143,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "62cc94d358b5a1e84a5cb9109f559aa3c4d634d2b1b4de3d0fa4adc7c78e2861"
  dependencies = [
   "anyhow",
@@ -508,7 +532,7 @@ index f6181b81..bc9d8fd5 100644
   "once_cell",
   "pbkdf2",
   "rand 0.8.5",
-@@ -18821,7 +18979,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+@@ -18821,7 +18976,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
  dependencies = [
   "cfg-if",
@@ -517,7 +541,7 @@ index f6181b81..bc9d8fd5 100644
   "static_assertions",
  ]
  
-@@ -18906,9 +19064,9 @@ checksum = "0e13db2e0ccd5e14a544e8a246ba2312cd25223f616442d7f2cb0e3db614236e"
+@@ -18906,9 +19061,9 @@ checksum = "0e13db2e0ccd5e14a544e8a246ba2312cd25223f616442d7f2cb0e3db614236e"
  
  [[package]]
  name = "typenum"
@@ -529,7 +553,7 @@ index f6181b81..bc9d8fd5 100644
  
  [[package]]
  name = "typeshare"
-@@ -19063,7 +19221,7 @@ version = "0.5.1"
+@@ -19063,7 +19218,7 @@ version = "0.5.1"
  source = "registry+https://github.com/rust-lang/crates.io-index"
  checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
  dependencies = [
@@ -538,7 +562,7 @@ index f6181b81..bc9d8fd5 100644
   "subtle",
  ]
  
-@@ -20222,7 +20380,7 @@ dependencies = [
+@@ -20222,7 +20377,7 @@ dependencies = [
   "pem 3.0.4",
   "ring 0.17.8",
   "signature 2.2.0",
@@ -547,6 +571,24 @@ index f6181b81..bc9d8fd5 100644
   "thiserror 1.0.69",
   "zeroize",
  ]
+diff --git a/Cargo.toml b/Cargo.toml
+index 0f70436a..92a027d4 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -777,3 +777,13 @@ async-graphql = { git = "https://github.com/amnn/async-graphql", branch = "v7.0.
+ async-graphql-axum = { git = "https://github.com/amnn/async-graphql", branch = "v7.0.1-react-18-graphiql-4" }
+ async-graphql-value = { git = "https://github.com/amnn/async-graphql", branch = "v7.0.1-react-18-graphiql-4" }
+ 
++# Local PQ fork: teaches sui-sdk-types the SLH-DSA (0x07) scheme so the gRPC
++# transaction-submission path can carry post-quantum signatures, letting
++# `sui client transfer …` work natively for SLH-DSA accounts. The fork is
++# cloned as a sibling of this repo by scripts/build-pq-validator.sh and patched
++# with patches/sui-rust-sdk-slh-dsa.patch (against the same rev pinned above).
++[patch."https://github.com/MystenLabs/sui-rust-sdk.git"]
++sui-sdk-types = { path = "../sui-rust-sdk/crates/sui-sdk-types" }
++sui-crypto = { path = "../sui-rust-sdk/crates/sui-crypto" }
++sui-rpc = { path = "../sui-rust-sdk/crates/sui-rpc" }
++
 diff --git a/crates/sui-bridge/src/utils.rs b/crates/sui-bridge/src/utils.rs
 index 967e43d8..1e7029c7 100644
 --- a/crates/sui-bridge/src/utils.rs

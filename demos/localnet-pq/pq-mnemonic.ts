@@ -7,7 +7,8 @@
  *   2. prove the derivation is deterministic by re-importing the same mnemonic
  *      into two independent, isolated keystores and checking the address,
  *   3. fund the post-quantum address from the localnet faucet, and
- *   4. execute a real on-chain transfer signed by ONLY the SLH-DSA key — the
+ *   4. execute a real on-chain transfer with native `sui client transfer-sui`,
+ *      signed by ONLY the SLH-DSA key (submitted over gRPC end to end) — the
  *      CLI keystore holds no elliptic-curve key for this account at all.
  *
  * Runs entirely in a throwaway `SUI_CONFIG_DIR`, so it never touches the
@@ -16,12 +17,10 @@
  * 127.0.0.1:9000 and its faucet on :9123. No public endpoint is contacted.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Transaction } from '@mysten/sui/transactions';
 import { LOCALNET_FAUCET, LOCALNET_RPC, client, sleep } from './lib.js';
-import { type PqAccount, pqExec } from './pq-sign.js';
 
 const SUI = `${process.env.HOME}/.local/share/pq-sui/sui/target/release/sui`;
 const RUN = process.env.PQ_RUN ?? `${process.pid}`;
@@ -162,33 +161,30 @@ async function main() {
   ok('funded', coins.length > 0, `${coins.length} coin(s)`);
   console.log();
 
-  // 4. Execute a real on-chain transfer signed by ONLY the CLI-derived SLH-DSA
-  //    key. We read the key the CLI just wrote to its keystore (the
-  //    mnemonic-derived `0x07 || 64-byte signing key`) and submit over JSON-RPC,
-  //    which the patched node verifies natively. (The CLI's own gRPC submission
-  //    path can't carry scheme 0x07 — the external `sui-sdk-types` crate's
-  //    SignatureScheme enum stops at Passkey; see docs/local-pq-validator.md.)
-  console.log('4. Transfer on-chain, authenticated by the SLH-DSA key alone (no EC key)');
-  const entries = JSON.parse(readFileSync(join(CFG, 'sui.keystore'), 'utf8')) as string[];
-  const skFull = entries.map((b) => Buffer.from(b, 'base64')).find((bytes) => bytes[0] === 0x07);
-  if (!skFull) throw new Error('no SLH-DSA key found in the CLI keystore');
-  const sk = new Uint8Array(skFull.subarray(1)); // 64-byte FIPS-205 signing key
-  const pk = sk.slice(32, 64); // PK.seed ‖ PK.root
-  const acct: PqAccount = { pk, sk, address };
-  ok(
-    'key read from CLI keystore',
-    sk.length === 64 && pk.length === 32,
-    `flag=0x07 sk=${sk.length}B`,
-  );
-
-  const tx = new Transaction();
-  const [coin] = tx.splitCoins(tx.gas, [1_000_000]);
-  tx.transferObjects([coin], recipient);
-  const res = await pqExec(c, acct, tx);
-  ok('transaction executed', !!res.digest, res.digest);
+  // 4. Execute a real on-chain transfer with NATIVE `sui client transfer-sui`,
+  //    signed by ONLY the SLH-DSA key and submitted over gRPC — end to end
+  //    through the patched CLI, node, and forked sui-sdk-types (scheme 0x07).
+  console.log('4. Native `sui client transfer-sui`, authenticated by SLH-DSA alone (no EC key)');
+  sui(['client', 'switch', '--address', address]);
+  const res = suiJson([
+    'client',
+    'transfer-sui',
+    '--to',
+    recipient,
+    '--sui-coin-object-id',
+    coins[0].coinObjectId,
+    '--amount',
+    '1000000',
+    '--gas-budget',
+    '2500000000',
+  ]);
+  const digest = pick(res, 'digest') as string;
+  const status = pick(res.effects?.status ?? {}, 'status');
+  ok('transaction executed', status === 'success', `status=${status}`);
+  console.log(`     digest: ${digest}`);
 
   // Independently confirm the sender is the post-quantum (0x07) account.
-  const onchain = await c.getTransactionBlock({ digest: res.digest, options: { showInput: true } });
+  const onchain = await c.getTransactionBlock({ digest, options: { showInput: true } });
   ok(
     'sender is the PQ account',
     onchain.transaction?.data.sender === address,
@@ -196,7 +192,7 @@ async function main() {
   );
 
   console.log('\n✅ A BIP-39 mnemonic derived a post-quantum SLH-DSA account that');
-  console.log('   transacted on-chain with no elliptic-curve key anywhere.');
+  console.log('   transacted on-chain via `sui client`, with no elliptic-curve key anywhere.');
 }
 
 main()

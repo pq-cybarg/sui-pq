@@ -24,7 +24,8 @@ the built-in schemes. Patching that path is the gap this doc closes, locally.
 | Artifact | Purpose |
 | --- | --- |
 | [`patches/sui-1.72.2-native-slh-dsa.patch`](../patches/sui-1.72.2-native-slh-dsa.patch) | The complete diff against Sui `mainnet-v1.72.2`: adds `SignatureScheme::SlhDsa` (flag `0x07`), a native `GenericSignature::SlhDsaAuthenticator`, a `SuiKeyPair::SlhDsa` signing key with BIP-39 mnemonic derivation, and wires all of it through address derivation, signing, and the keystore/CLI. |
-| [`scripts/build-pq-validator.sh`](../scripts/build-pq-validator.sh) | Clone Sui at the pinned revision, apply the patch, build `sui` + `sui-node`, and launch a one-validator localnet with a faucet. |
+| [`patches/sui-rust-sdk-slh-dsa.patch`](../patches/sui-rust-sdk-slh-dsa.patch) | Teaches the external [`sui-sdk-types`](https://crates.io/crates/sui-sdk-types) crate the SLH-DSA (`0x07`) scheme + a `UserSignature::SlhDsa` variant, so the CLI's **gRPC** submission path carries post-quantum signatures and `sui client transfer …` works natively. Applied to a sibling fork that `sui`'s `Cargo.toml` `[patch]` points at. |
+| [`scripts/build-pq-validator.sh`](../scripts/build-pq-validator.sh) | Clone Sui + the `sui-rust-sdk` fork at their pinned revisions, apply both patches, build `sui` + `sui-node`, and launch a one-validator localnet with a faucet. |
 | [`crates/slh-dsa-sui/`](../crates/slh-dsa-sui) | A standalone, verify-only FIPS-205 wrapper crate + KAT tests proving byte-for-byte interop with [`@noble/post-quantum`](https://github.com/paulmillr/noble-post-quantum) (the signer the dApp/CLI use). |
 | [`patches/superseded/`](../patches/superseded) | The earlier **SLH-DSA-LITE** attempt (flag `0x06`, custom `n = 32` profile). Kept as a record of the design that was abandoned once we confirmed the standard FIPS-205 path was viable — see its README. |
 
@@ -119,9 +120,9 @@ pnpm demo:pq-native       # a single zero-elliptic-curve transaction, end to end
 `demo:pq-mnemonic` exercises the full path this doc adds: it derives an account
 from a fresh BIP-39 mnemonic via the patched CLI (`sui client new-address
 slhdsa`), re-derives the same address in two independent isolated keystores
-(proving determinism), funds it, and executes a real on-chain transfer
-authenticated by **only** the SLH-DSA key the CLI manages — submitting over
-JSON-RPC, which the node verifies natively (see the gRPC caveat below).
+(proving determinism), funds it, and runs **native `sui client transfer-sui`** —
+a real on-chain transfer authenticated by **only** the SLH-DSA key, submitted
+over gRPC end to end (CLI → forked `sui-sdk-types` → node), no elliptic curve.
 
 Rust-level coverage lives alongside the patch: `from_ikm` determinism and a
 sign→verify round-trip in `crates/sui-types/src/slh_dsa_authenticator.rs`, and a
@@ -137,18 +138,18 @@ mnemonic-derivation integration test in `crates/sui-keys/tests/tests.rs`.
   the new scheme are left as `error`/`unimplemented` where SLH-DSA can't be
   represented (e.g. Rosetta's `CurveType` has no PQ variant); the address,
   signing, and verification paths are fully wired.
-- **Transaction submission: JSON-RPC, not gRPC.** The patched node verifies
-  SLH-DSA transactions on both interfaces, but the CLI's *gRPC* submission path
+- **Forked `sui-sdk-types`.** The CLI submits transactions over **gRPC**, which
   serializes the user signature through the external
-  [`sui-sdk-types`](https://crates.io/crates/sui-sdk-types) crate, whose
-  `SignatureScheme` enum stops at `Passkey` (`0x06`) — so it rejects scheme
-  `0x07` before the bytes ever leave the client. Submitting the same transaction
-  over JSON-RPC (`sui_executeTransactionBlock`, what `@sui-gen/sdk-core` and the
-  demos use) works natively. Making `sui client transfer …` submit SLH-DSA over
-  gRPC would require teaching `sui-sdk-types` (and the gRPC proto) the new
-  scheme — a change to an upstream dependency, out of scope for this fork. Key
-  *derivation, storage, and signing* in the CLI/keystore are fully wired; only
-  the gRPC submission wire-format is gated by the external crate.
+  [`sui-sdk-types`](https://crates.io/crates/sui-sdk-types) crate. That crate's
+  `SignatureScheme` enum originally stopped at `Passkey` (`0x06`), so it rejected
+  scheme `0x07` before the bytes left the client. `patches/sui-rust-sdk-slh-dsa.patch`
+  adds the `SlhDsa` scheme + a `UserSignature::SlhDsa` variant (BCS `flag ‖ pk ‖
+  sig`, address = `blake2b256(0x07 ‖ pk)`); no proto-schema change is needed
+  because the proto carries the signature as an opaque `bcs` field, which the
+  node decodes first. The fork is a sibling of the sui checkout and `sui`'s
+  `Cargo.toml` `[patch]` resolves `../sui-rust-sdk`. With it, `sui client
+  transfer …` submits SLH-DSA natively. (The node also accepts SLH-DSA over
+  JSON-RPC `sui_executeTransactionBlock`, the path `@sui-gen/sdk-core` uses.)
 - **Divergent ledger.** A node running this patch will not agree with stock Sui
   validators on the validity of `0x07`-flagged transactions. Keep it on an
   isolated localnet.

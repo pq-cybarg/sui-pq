@@ -17,6 +17,12 @@ PQ_SUI_HOME="${PQ_SUI_HOME:-$HOME/.local/share/pq-sui}"
 SUI_REPO="${SUI_REPO:-https://github.com/MystenLabs/sui.git}"
 # Pin to a known-tested revision. Bump + re-test before changing.
 SUI_REV="${SUI_REV:-mainnet-v1.72.2}"
+# sui-rust-sdk: forked so sui-sdk-types knows the SLH-DSA (0x07) scheme, which
+# lets the gRPC submission path carry post-quantum signatures (the sui
+# Cargo.toml [patch] points at ../sui-rust-sdk — a sibling of $PQ_SUI_HOME/sui).
+# Rev must match the one pinned in sui's Cargo.toml.
+SDK_REPO="${SDK_REPO:-https://github.com/MystenLabs/sui-rust-sdk.git}"
+SDK_REV="${SDK_REV:-e494a36a76a0aab8c5d66d5557995faee5c1fb09}"
 
 color() { printf "\033[%sm%s\033[0m\n" "$1" "$2"; }
 log()   { color "1;34" "[pq-validator] $1"; }
@@ -62,6 +68,24 @@ if (( LAUNCH_ONLY == 0 )); then
   fi
 
   if (( SKIP_PATCHES == 0 )); then
+    # Fork sui-rust-sdk as a sibling of the sui checkout and teach sui-sdk-types
+    # the SLH-DSA scheme (sui's Cargo.toml [patch] resolves ../sui-rust-sdk).
+    if [ ! -d "$PQ_SUI_HOME/sui-rust-sdk/.git" ]; then
+      log "cloning $SDK_REPO to $PQ_SUI_HOME/sui-rust-sdk at $SDK_REV"
+      git clone "$SDK_REPO" "$PQ_SUI_HOME/sui-rust-sdk"
+      git -C "$PQ_SUI_HOME/sui-rust-sdk" checkout "$SDK_REV"
+    else
+      ok "sui-rust-sdk fork already present"
+    fi
+    if grep -q "SlhDsa" "$PQ_SUI_HOME/sui-rust-sdk/crates/sui-sdk-types/src/crypto/signature.rs"; then
+      ok "sui-sdk-types SLH-DSA patch already applied"
+    else
+      log "applying sui-rust-sdk-slh-dsa.patch"
+      git -C "$PQ_SUI_HOME/sui-rust-sdk" apply --3way --whitespace=fix \
+        "$PATCHES/sui-rust-sdk-slh-dsa.patch" \
+        || die "sui-rust-sdk-slh-dsa.patch failed to apply; rebase against $SDK_REV"
+    fi
+
     cd "$PQ_SUI_HOME/sui"
     PATCH="$PATCHES/sui-1.72.2-native-slh-dsa.patch"
     # The patch's signature is the new authenticator module; if it's present,
